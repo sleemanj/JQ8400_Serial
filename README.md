@@ -1,25 +1,24 @@
-JQ6500_Serial
+*warning* This is a work in progress still, examples need to be rewritten, docs regenerated, and this readme isn't correct yet either :-)
+
+JQ8400_Serial
 =======================
 
-Simple to use Arduino library to interface to JQ6500 (JQ6500-28P, JQ6500-16P) Mp3 Player Modules
+Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-SD) Mp3 Player Modules
 
-For complete documentation about the JQ6500 Mp3 Player Module, see: 
-   http://sparks.gogo.co.nz/jq6500/index.html
+For complete documentation about the JQ8400 Mp3 Player Module, see: 
+   http://sparks.gogo.co.nz/jq8400/index.html
    
 For a library methods reference see:
-   https://rawcdn.githack.com/sleemanj/JQ6500_Serial/48d9a2ea1c10bec7a9bf69f397898daec2b4101c/docs/html/class_j_q6500___serial.html
-
-For Linux Upload and Windows Upload Repair Tool (JQ6500-16) see:
-   https://github.com/NikolaiRadke/JQ6500-rescue-tool
+   https://rawcdn.githack.com/sleemanj/JQ8400_Serial/48d9a2ea1c10bec7a9bf69f397898daec2b4101c/docs/html/class_j_q8400___serial.html
 
 Download, Install and Example
 -----------------------------
 
-* Download: http://sparks.gogo.co.nz/JQ6500_Serial.zip
-* Open the Arduino IDE (1.0.5)
+* Download: http://sparks.gogo.co.nz/JQ8400_Serial.zip
+* Open the Arduino IDE (1.6+)
 * Select the menu item Sketch > Import Library > Add Library
-* Choose to install the JQ6500_Serial.zip file you downloaded
-* Now you can choose File > Examples > JQ6500_Serial > HelloWorld
+* Choose to install the JQ8400_Serial.zip file you downloaded
+* Now you can choose File > Examples > JQ8400_Serial > HelloWorld
   
 Connecting To Your Arduino
 --------------------------
