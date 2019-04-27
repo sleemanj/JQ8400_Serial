@@ -1,7 +1,7 @@
 /** 
- * Arduino Library for JQ6500 MP3 Module
+ * Arduino Library for JQ8400 MP3 Module
  * 
- * Copyright (C) 2014 James Sleeman, <http://sparks.gogo.co.nz/jq6500/index.html>
+ * Copyright (C) 2019 James Sleeman, <http://sparks.gogo.co.nz/jq6500/index.html>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -26,11 +26,8 @@
  * @file
  */
 
-// Please note, the Arduino IDE is a bit retarded, if the below define has an
-// underscore other than _h, it goes mental.  Wish it wouldn't  mess
-// wif ma files!
-#ifndef JQ6500Serial_h
-#define JQ6500Serial_h
+#ifndef JQ8400Serial_h
+#define JQ8400Serial_h
 
 #include <SoftwareSerial.h>
 
@@ -41,8 +38,10 @@
 #define MP3_EQ_CLASSIC    4
 #define MP3_EQ_BASS       5
 
+#define MP3_SRC_USB       0
 #define MP3_SRC_SDCARD    1
-#define MP3_SRC_BUILTIN   4
+#define MP3_SRC_FLASH     2
+#define MP3_SRC_BUILTIN   MP3_SRC_FLASH
 
 // Looping options, ALL, FOLDER, ONE and ONE_STOP are the 
 // only ones that appear to do much interesting
@@ -54,11 +53,15 @@
 //  move to next/previous track, really weird.
 
 #define MP3_LOOP_ALL      0
-#define MP3_LOOP_FOLDER   1
-#define MP3_LOOP_ONE      2
-#define MP3_LOOP_RAM      3
-#define MP3_LOOP_ONE_STOP 4
-#define MP3_LOOP_NONE     4 
+#define MP3_LOOP_ONE      1
+#define MP3_LOOP_ONE_STOP 2
+#define MP3_LOOP_RANDOM   3
+#define MP3_LOOP_FOLDER   4
+#define MP3_LOOP_RANDOM_RANDOM   5
+#define MP3_LOOP_FOLDER_STOP     6
+#define MP3_LOOP_ALL_STOP        7
+
+#define MP3_LOOP_NONE            0 
 
 #define MP3_STATUS_STOPPED 0
 #define MP3_STATUS_PLAYING 1
@@ -75,31 +78,33 @@
 // of tests etc...
 #define MP3_STATUS_CHECKS_IN_AGREEMENT 4
 
-#define MP3_DEBUG 0
+#define MP3_DEBUG 1
 
-class JQ6500_Serial : public SoftwareSerial
+#define HEX_PRINT(a) if(a < 16) Serial.print(0); Serial.print(a, HEX);
+
+class JQ8400_Serial : public SoftwareSerial
 {
   
   public: 
 
-    /** Create JQ6500 object.
+    /** Create JQ8400 object.
      * 
      * Example, create global instance:
      * 
-     *     JQ6500_Serial mp3(8,9);
+     *     JQ8400_Serial mp3(8,9);
      * 
      * For a 5v Arduino:
      * -----------------
-     *  * TX on JQ6500 connects to D8 on the Arduino
-     *  * RX on JQ6500 connects to one end of a 1k resistor,
+     *  * TX on JQ8400 connects to D8 on the Arduino
+     *  * RX on JQ8400 connects to one end of a 1k resistor,
      *      other end of resistor connects to D9 on the Arduino
      * 
      * For a 3v3 Arduino:
      * -----------------
-     *  * TX on JQ6500 connects to D8 on the Arduino
-     *  * RX on JQ6500 connects to D9 on the Arduino
+     *  * TX on JQ8400 connects to D8 on the Arduino
+     *  * RX on JQ8400 connects to D9 on the Arduino
      * 
-     * Of course, power and ground are also required, VCC on JQ6500 is 5v tolerant (but RX isn't totally, hence the resistor above).
+     * Of course, power and ground are also required, VCC on JQ8400 is 5v tolerant (but RX isn't totally, hence the resistor above).
      * 
      * And then you can use in your setup():
      * 
@@ -109,7 +114,7 @@ class JQ6500_Serial : public SoftwareSerial
      * and all the other commands :-)
      */
     
-    JQ6500_Serial(short rxPin, short txPin) : SoftwareSerial(rxPin,txPin) { };
+    JQ8400_Serial(short rxPin, short txPin) : SoftwareSerial(rxPin,txPin) { };
     
     /** Start playing the current file.
      */
@@ -119,7 +124,7 @@ class JQ6500_Serial : public SoftwareSerial
     /** Restart the current (possibly paused) track from the 
      *  beginning.
      *  
-     *  Note that this is not an actual command the JQ6500 knows
+     *  Note that this is not an actual command the JQ8400 knows
      *  what we do is mute, advance to the next track, pause,
      *  unmute, and go back to the previous track (which will
      *  cause it to start playing.
@@ -222,15 +227,42 @@ class JQ6500_Serial : public SoftwareSerial
     
     void setLoopMode(byte loopMode);
     
-    /** Set the source to read mp3 data from.
+    /** Set the source to read mp3 data from.  Note that the datasheet calls this "drive".
      * 
-     *  @param source One of the following,
+     *  @param source One of the following...
      * 
      *   * MP3_SRC_BUILTIN    - Files read from the on-board flash memory
-     *   * MP3_SRC_SDCARD     - Files read from the SD Card (JQ6500-28P only)
+     *   * MP3_SRC_SDCARD     - Files read from the SD Card
+     *   * MP3_SRC_USB        - Files from a connected USB device?  I have not seen modules capable of this, but possible?
      */
     
     void setSource(byte source);        // SRC_BUILTIN or SRC_SDCARD       
+    
+    /** Return the currently selected source.
+     * 
+     *  @return One of the following...
+     * 
+     *   * MP3_SRC_BUILTIN    - Files read from the on-board flash memory
+     *   * MP3_SRC_SDCARD     - Files read from the SD Card
+     *   * MP3_SRC_USB        - Files from a connected USB device?  I have not seen modules capable of this, but possible?
+     */
+    
+    uint8_t getSource();
+        
+    /** Return boolean indicating if the given source is available (can be selected using `setSource()`)
+     * 
+     * @param  source One of the following     
+     *   * MP3_SRC_BUILTIN    - Files read from the on-board flash memory
+     *   * MP3_SRC_SDCARD     - Files read from the SD Card
+     *   * MP3_SRC_USB        - Files from a connected USB device?  I have not seen modules capable of this, but possible?
+     * 
+     * @return bool
+     */
+    
+    uint8_t isSourceAvailable(uint8_t source)
+    {
+      return getAvailableSources() & 1<<source;
+    }
     
     /** Put the device to sleep.
      * 
@@ -248,7 +280,7 @@ class JQ6500_Serial : public SoftwareSerial
      * as sometimes it can get a bit confused, especially if changing
      * SD Cards on-the-fly which really doesn't work too well.
      * 
-     * So if designing a PCB/circuit including JQ6500 modules it might be 
+     * So if designing a PCB/circuit including JQ8400 modules it might be 
      * worth while to include such ability (ie, power the device through 
      * a MOSFET which you can turn on/off at will).
      * 
@@ -306,35 +338,64 @@ class JQ6500_Serial : public SoftwareSerial
     
     byte getLoopMode();
     
+    
+    /** Count the number of files on the current media.
+     * 
+     * @return Number of files present on that media.
+     * 
+     */
+    
+    unsigned int   countFiles();    
+    
     /** Count the number of files on the specified media.
+     * 
+     *  Note: changes to the given source.
      * 
      * @param source One of MP3_SRC_BUILTIN and MP3_SRC_SDCARD
      * @return Number of files present on that media.
      * 
      */
     
-    unsigned int   countFiles(byte source);    
+    unsigned int   countFiles(byte source) { setSource(source); return countFiles(); };
+    
+    /** Count the number of folders on the current media.
+     * 
+     * @return Number of folders present on that media.
+     */
+    
+    unsigned int   countFolders();    
     
     /** Count the number of folders on the specified media.
      * 
-     *  Note that only SD Card can have folders.
+     * Note: Changes to the specified source
      * 
      * @param source One of MP3_SRC_BUILTIN and MP3_SRC_SDCARD
      * @return Number of folders present on that media.
      */
     
-    unsigned int   countFolders(byte source);    
+    unsigned int   countFolders(byte source) { setSource(source); return countFolders(); };
     
     /** For the currently playing (or paused, or file that would be played 
      *  next if stopped) file, return the file's (FAT table) index number.
      * 
      *  This number can be used with playFileByIndexNumber();
      * 
-     *  @param source One of MP3_SRC_BUILTIN and MP3_SRC_SDCARD
      *  @return Number of file.
      */
     
-    unsigned int   currentFileIndexNumber(byte source);
+    unsigned int   currentFileIndexNumber();
+    
+    /** For the currently playing (or paused, or file that would be played 
+     *  next if stopped) file, return the file's (FAT table) index number.
+     * 
+     *  This number can be used with playFileByIndexNumber();
+     * 
+     *  @deprecated Use `currentFileIndexNumber()` instead with no parameters.
+     *  @param  source One of MP3_SRC_BUILTIN and MP3_SRC_SDCARD, this parameter is ignored.
+     *  @return Number of file.
+     */
+    
+    unsigned int   currentFileIndexNumber(byte source __attribute__((unused)) ) { return currentFileIndexNumber(); }
  
     /** For the currently playing or paused file, return the 
      *  current position in seconds.
@@ -370,7 +431,7 @@ class JQ6500_Serial : public SoftwareSerial
     
   protected:
     
-    /** Send a command to the JQ6500 module, 
+    /** Send a command to the JQ8400 module, 
      * @param command        Byte value of to send as from the datasheet.
      * @param arg1           First (if any) argument byte
      * @param arg2           Second (if any) argument byte
@@ -378,17 +439,16 @@ class JQ6500_Serial : public SoftwareSerial
      * @param buffLength     Length of response buffer including NULL terminator.
      */
     
-    void sendCommand(byte command, byte arg1, byte arg2, char *responseBuffer, unsigned int bufferLength);
+    void sendCommand(byte command, uint8_t arg1, uint8_t arg2, char *responseBuffer, unsigned int bufferLength);
 
+    void sendCommandData(byte command, uint8_t *requestBuffer, uint8_t requestLength, uint8_t *responseBuffer, unsigned int bufferLength);
+    
     // Just some different versions of that for ease of use
     void sendCommand(byte command);    
     void sendCommand(byte command, byte arg1);    
     void sendCommand(byte command, byte arg1, byte arg2);
     
-    /** Send a command to the JQ6500 module, and get a response.
-     * 
-     * For the query commands, the JQ6500 generally sends an integer response
-     * (over the UART as 4 hexadecimal digits).
+    /** Send a command to the JQ8400 module, and get a 16 bit response.
      * 
      * @param command        Byte value of to send as from the datasheet.
      * @return Response from module.
@@ -396,52 +456,87 @@ class JQ6500_Serial : public SoftwareSerial
     
     unsigned int sendCommandWithUnsignedIntResponse(byte command);
 
-    // This seems not that useful since there only seems to be a version 1 anway :/
-    unsigned int getVersion();
+    /** Send a command to the JQ8400 module, and get an 8 bit response.
+     * 
+     * @param command        Byte value of to send as from the datasheet.
+     * @return Response from module.
+     */
+    
+    uint8_t sendCommandWithByteResponse(uint8_t command);
+
+    
+    
+    /** Return a bitmask of the available sources.
+     */
+    
+    uint8_t getAvailableSources();
     
     size_t readBytesUntilAndIncluding(char terminator, char *buffer, size_t length, byte maxOneLineOnly = 0);
     
     int    waitUntilAvailable(unsigned long maxWaitTime = 1000);
     
-    static const uint8_t MP3_CMD_BEGIN = 0x7E;
-    static const uint8_t MP3_CMD_END   = 0xEF;
+    static const uint8_t MP3_CMD_BEGIN = 0xAA;
     
-    static const uint8_t MP3_CMD_PLAY = 0x0D;
-    static const uint8_t MP3_CMD_PAUSE = 0x0E;
-    static const uint8_t MP3_CMD_NEXT = 0x01;
-    static const uint8_t MP3_CMD_PREV = 0x02;
-    static const uint8_t MP3_CMD_PLAY_IDX = 0x03;
+    static const uint8_t MP3_CMD_PLAY = 0x02;
+    static const uint8_t MP3_CMD_PAUSE = 0x03;
+    
+    static const uint8_t MP3_CMD_STOP = 0x10;
+    
+    
+    static const uint8_t MP3_CMD_NEXT = 0x06;
+    static const uint8_t MP3_CMD_PREV = 0x05;
+    static const uint8_t MP3_CMD_PLAY_IDX = 0x07;
+    static const uint8_t MP3_CMD_INSERT_IDX = 0x16; // FIXME - Implement
+    
     
     static const uint8_t MP3_CMD_NEXT_FOLDER = 0x0F;
-    static const uint8_t MP3_CMD_PREV_FOLDER = 0x0F; // Note the same as next, the data byte indicates direction
+    static const uint8_t MP3_CMD_PREV_FOLDER = 0x0E;
     
-    static const uint8_t MP3_CMD_PLAY_FILE_FOLDER = 0x12;
+      static const uint8_t MP3_CMD_PLAY_FILE_FOLDER = 0x08; // FIXME
     
-    static const uint8_t MP3_CMD_VOL_UP = 0x04;
-    static const uint8_t MP3_CMD_VOL_DN = 0x05;
-    static const uint8_t MP3_CMD_VOL_SET = 0x06;
+    static const uint8_t MP3_CMD_VOL_UP = 0x14;
+    static const uint8_t MP3_CMD_VOL_DN = 0x15;
+    static const uint8_t MP3_CMD_VOL_SET = 0x13;
     
-    static const uint8_t MP3_CMD_EQ_SET = 0x07;
-    static const uint8_t MP3_CMD_LOOP_SET = 0x11;    
-    static const uint8_t MP3_CMD_SOURCE_SET = 0x09;
-    static const uint8_t MP3_CMD_SLEEP = 0x0A;    
-    static const uint8_t MP3_CMD_RESET = 0x0C;
+    static const uint8_t MP3_CMD_EQ_SET = 0x1A;
+    static const uint8_t MP3_CMD_LOOP_SET = 0x18;    
+    static const uint8_t MP3_CMD_SOURCE_SET = 0x0B;
     
-    static const uint8_t MP3_CMD_STATUS = 0x42;
-    static const uint8_t MP3_CMD_VOL_GET = 0x43;
-    static const uint8_t MP3_CMD_EQ_GET = 0x44;
-    static const uint8_t MP3_CMD_LOOP_GET = 0x45;
-    static const uint8_t MP3_CMD_VER_GET = 0x46;
+      static const uint8_t MP3_CMD_SLEEP = 0x04;    // FIXME - not right
+      static const uint8_t MP3_CMD_RESET = 0x04;    // FIXME - not right
+
+    static const uint8_t MP3_CMD_STATUS = 0x01;
     
-    static const uint8_t MP3_CMD_COUNT_SD  = 0x47;
-    static const uint8_t MP3_CMD_COUNT_MEM = 0x49;
-    static const uint8_t MP3_CMD_COUNT_FOLDERS = 0x53;
-    static const uint8_t MP3_CMD_CURRENT_FILE_IDX_SD = 0x4B;
-    static const uint8_t MP3_CMD_CURRENT_FILE_IDX_MEM = 0x4D;
+    static const uint8_t MP3_CMD_GET_SOURCES = 0x09;
+    static const uint8_t MP3_CMD_GET_SOURCE  = 0x0A;
     
-    static const uint8_t MP3_CMD_CURRENT_FILE_POS_SEC = 0x50;
-    static const uint8_t MP3_CMD_CURRENT_FILE_LEN_SEC = 0x51;
-    static const uint8_t MP3_CMD_CURRENT_FILE_NAME = 0x52;
+    uint8_t currentVolume = 20;
+    uint8_t currentEq     = 0;
+    uint8_t currentLoop   = 2;
+    
+    // static const uint8_t MP3_CMD_VOL_GET = 0x43; // FIXME
+    // static const uint8_t MP3_CMD_EQ_GET = 0x44; // FIXME
+    // static const uint8_t MP3_CMD_LOOP_GET = 0x45; // FIXME
+    // static const uint8_t MP3_CMD_VER_GET = 0x46; // FIXME
+    
+    // static const uint8_t MP3_CMD_COUNT_SD  = 0x0C;
+    // static const uint8_t MP3_CMD_COUNT_MEM = 0x0C; 
+    static const uint8_t MP3_CMD_COUNT_FILES     = 0x0C; // FIXME - No Difference for 8400?
+    static const uint8_t MP3_CMD_COUNT_IN_FOLDER = 0x12; // FIXME - Implement
+    
+    static const uint8_t MP3_CMD_COUNT_FOLDERS        = 0x53;    
+    // static const uint8_t MP3_CMD_CURRENT_FILE_IDX_SD  = 0x0D;
+    // static const uint8_t MP3_CMD_CURRENT_FILE_IDX_MEM = 0x0D; 
+    static const uint8_t MP3_CMD_CURRENT_FILE_IDX         = 0x0D; // FIXME - No Difference for 8400?   
+    static const uint8_t MP3_CMD_FIRST_FILE_IN_FOLDER_IDX = 0x11; // FIXME - Implement
+    
+    
+    
+    // static const uint8_t MP3_CMD_CURRENT_FILE_POS_SEC = 0x50;
+    // static const uint8_t MP3_CMD_CURRENT_FILE_LEN_SEC = 0x51;
+    static const uint8_t MP3_CMD_CURRENT_FILE_LEN = 0x24;
+    static const uint8_t MP3_CMD_CURRENT_FILE_NAME = 0x1E;
+    
     
 };
 

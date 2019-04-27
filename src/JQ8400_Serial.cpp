@@ -1,7 +1,7 @@
 /** 
- * Arduino Library for JQ6500 MP3 Module
+ * Arduino Library for JQ8400 MP3 Module
  * 
- * Copyright (C) 2014 James Sleeman, <http://sparks.gogo.co.nz/jq6500/index.html>
+ * Copyright (C) 2019 James Sleeman, <http://sparks.gogo.co.nz/jq6500/index.html>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -27,16 +27,16 @@
  */
 
 #include <Arduino.h>
-#include "JQ6500_Serial.h"
+#include "JQ8400_Serial.h"
 #include <SoftwareSerial.h>
 
 
-void  JQ6500_Serial::play()
+void  JQ8400_Serial::play()
 {
   this->sendCommand(MP3_CMD_PLAY);
 }
 
-void  JQ6500_Serial::restart()
+void  JQ8400_Serial::restart()
 {
   byte oldVolume = this->getVolume();  
   this->setVolume(0);
@@ -46,84 +46,140 @@ void  JQ6500_Serial::restart()
   this->prev();
 }
 
-void  JQ6500_Serial::pause()
+void  JQ8400_Serial::pause()
 {
   this->sendCommand(MP3_CMD_PAUSE);
 }
 
-void  JQ6500_Serial::next()
+void  JQ8400_Serial::next()
 {
   this->sendCommand(MP3_CMD_NEXT);
 }
 
-void  JQ6500_Serial::prev()
+void  JQ8400_Serial::prev()
 {
   this->sendCommand(MP3_CMD_PREV);
 }
 
-void  JQ6500_Serial::playFileByIndexNumber(unsigned int fileNumber)
+void  JQ8400_Serial::playFileByIndexNumber(unsigned int fileNumber)
 {  
   this->sendCommand(MP3_CMD_PLAY_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
 }
 
-void  JQ6500_Serial::nextFolder()
+void  JQ8400_Serial::nextFolder()
 {
-  this->sendCommand(MP3_CMD_NEXT_FOLDER, 0x01);  
+  this->sendCommand(MP3_CMD_NEXT_FOLDER);
 }
 
-void  JQ6500_Serial::prevFolder()
+void  JQ8400_Serial::prevFolder()
 {
-  this->sendCommand(MP3_CMD_PREV_FOLDER, 0x00);
+  this->sendCommand(MP3_CMD_PREV_FOLDER);
 }
 
-void  JQ6500_Serial::playFileNumberInFolderNumber(unsigned int folderNumber, unsigned int fileNumber)
+void  JQ8400_Serial::playFileNumberInFolderNumber(unsigned int folderNumber, unsigned int fileNumber)
 {
-  this->sendCommand(MP3_CMD_PLAY_FILE_FOLDER, folderNumber & 0xFF, fileNumber & 0xFF);
+  // This is kinda weird, the wildcard is *REQUIRED*, without it, it WILL NOT find the file you want.
+  //
+  // Really Weird.  Anyway this is the format for the data
+  //  the first byte is the source (as the byte value not ascii number)
+  //  then slash separated path components, with a trailing wildcard fvor each one REQUIRED
+  //  the basename of the file must have the wildcard also and the extention must be the 
+  //  3 question mark character wildcards, you can't even match on ".mp3", damn this is weird
+  
+  char buf[] = " /42*/032*???";
+  
+  buf[0] = this->getSource();
+  
+  uint8_t i = 2; // 1st digit folder component
+  if(folderNumber<10)
+  {
+    buf[i] = '0';
+    i++;
+  }
+  itoa(folderNumber,&buf[i], 10);
+  
+  i = 4;
+  buf[i] = '*'; // itoa clobbered this with it's null
+  
+  i = 6; // 1st digit filename component
+  if(fileNumber < 100)
+  {
+    buf[i] = '0';
+    i++;
+  }
+  
+  if(fileNumber < 10)
+  {
+      buf[i] = '0';
+      i++;
+  }
+  itoa(fileNumber, &buf[i], 10);
+  
+  buf[9] = '*'; // itoa clobbered this with it's null
+  
+  this->sendCommandData(MP3_CMD_PLAY_FILE_FOLDER, (uint8_t*)buf, sizeof(buf)-1, 0, 0);
 }
 
-void  JQ6500_Serial::volumeUp()
+void  JQ8400_Serial::volumeUp()
 {
-  this->sendCommand(MP3_CMD_VOL_UP);
+  if(currentVolume < 30) currentVolume++;
+  this->sendCommand(MP3_CMD_VOL_UP); // We still send the command just in case we got out of sync somehow
 }
 
-void  JQ6500_Serial::volumeDn()
+void  JQ8400_Serial::volumeDn()
 {
-  this->sendCommand(MP3_CMD_VOL_DN);
+  if(currentVolume > 0 ) currentVolume--;
+  this->sendCommand(MP3_CMD_VOL_DN); // We still send the command just in case we got out of sync somehow
 }
 
-void  JQ6500_Serial::setVolume(byte volumeFrom0To30)
+void  JQ8400_Serial::setVolume(byte volumeFrom0To30)
 {
+  currentVolume = volumeFrom0To30;
   this->sendCommand(MP3_CMD_VOL_SET, volumeFrom0To30);
 }
 
-void  JQ6500_Serial::setEqualizer(byte equalizerMode)
+void  JQ8400_Serial::setEqualizer(byte equalizerMode)
 {
+  currentEq = equalizerMode;
   this->sendCommand(MP3_CMD_EQ_SET, equalizerMode);
 }
 
-void  JQ6500_Serial::setLoopMode(byte loopMode)
+void  JQ8400_Serial::setLoopMode(byte loopMode)
 {
+  currentLoop = loopMode;
   this->sendCommand(MP3_CMD_LOOP_SET, loopMode);
 }
 
-void  JQ6500_Serial::setSource(byte source)
+
+uint8_t JQ8400_Serial::getAvailableSources() 
+{
+  return this->sendCommandWithByteResponse(MP3_CMD_GET_SOURCES);
+}
+
+void  JQ8400_Serial::setSource(byte source)
 {
   this->sendCommand(MP3_CMD_SOURCE_SET, source);
 }
 
-void  JQ6500_Serial::sleep()
+uint8_t JQ8400_Serial::getSource() 
+{
+  return this->sendCommandWithByteResponse(MP3_CMD_GET_SOURCE);
+}
+
+
+void  JQ8400_Serial::sleep()
 {
   this->sendCommand(MP3_CMD_SLEEP);
 }
 
-void  JQ6500_Serial::reset()
+void  JQ8400_Serial::reset()
 {
   this->sendCommand(MP3_CMD_RESET);
   delay(500); // We need some time for the reset to happen
 }
 
 
-    byte  JQ6500_Serial::getStatus()    
+    byte  JQ8400_Serial::getStatus()    
     {
       byte statTotal = 0;
       byte stat       = 0;
@@ -142,88 +198,69 @@ void  JQ6500_Serial::reset()
       return statTotal / MP3_STATUS_CHECKS_IN_AGREEMENT;      
     }
     
-    byte  JQ6500_Serial::getVolume()    { return this->sendCommandWithUnsignedIntResponse(MP3_CMD_VOL_GET); }
-    byte  JQ6500_Serial::getEqualizer() { return this->sendCommandWithUnsignedIntResponse(MP3_CMD_EQ_GET); }
-    byte  JQ6500_Serial::getLoopMode()  { return this->sendCommandWithUnsignedIntResponse(MP3_CMD_LOOP_GET); }
-    unsigned int  JQ6500_Serial::getVersion()   { return this->sendCommandWithUnsignedIntResponse(MP3_CMD_VER_GET); }
+    byte  JQ8400_Serial::getVolume()    { return currentVolume; } //this->sendCommandWithUnsignedIntResponse(MP3_CMD_VOL_GET); }
+    byte  JQ8400_Serial::getEqualizer() { return currentEq; } // this->sendCommandWithUnsignedIntResponse(MP3_CMD_EQ_GET); }
+    byte  JQ8400_Serial::getLoopMode()  { return currentLoop; } // this->sendCommandWithUnsignedIntResponse(MP3_CMD_LOOP_GET); }
     
-    unsigned int  JQ6500_Serial::countFiles(byte source)   
+    
+    unsigned int  JQ8400_Serial::countFiles()   
     {
-      if(source == MP3_SRC_SDCARD)
-      {
-        return this->sendCommandWithUnsignedIntResponse(MP3_CMD_COUNT_SD); 
-      }
-      else if (source == MP3_SRC_BUILTIN)
-      {
-        return this->sendCommandWithUnsignedIntResponse(MP3_CMD_COUNT_MEM);
-      }     
-      
-      return 0;
+      return this->sendCommandWithUnsignedIntResponse(MP3_CMD_COUNT_FILES); 
     }
     
-    unsigned int  JQ6500_Serial::countFolders(byte source) 
+    unsigned int  JQ8400_Serial::countFolders() 
     {
-      if(source == MP3_SRC_SDCARD)
-      {
-        return this->sendCommandWithUnsignedIntResponse(MP3_CMD_COUNT_FOLDERS); 
-      }
-      
-      return 0;
+      return this->sendCommandWithUnsignedIntResponse(MP3_CMD_COUNT_FOLDERS); 
     }
     
-    unsigned int  JQ6500_Serial::currentFileIndexNumber(byte source)
+    unsigned int  JQ8400_Serial::currentFileIndexNumber()
     {
-      if(source == MP3_SRC_SDCARD)
-      {
-        return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_IDX_SD); 
-      }
-      else if (source == MP3_SRC_BUILTIN)
-      {
-        return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_IDX_MEM)+1; // CRAZY!
-      }     
-      
-      return 0;
+      return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_IDX); 
     }
     
-    unsigned int  JQ6500_Serial::currentFilePositionInSeconds() { return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_POS_SEC); }
-    unsigned int  JQ6500_Serial::currentFileLengthInSeconds()   { return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_LEN_SEC); }
+    unsigned int  JQ8400_Serial::currentFilePositionInSeconds() { return 0; /* FIXME return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_POS_SEC); */ }
     
-    void          JQ6500_Serial::currentFileName(char *buffer, unsigned int bufferLength) 
+    unsigned int  JQ8400_Serial::currentFileLengthInSeconds()   { return 0; /* FIXME this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_LEN_SEC); */ }
+    
+    void          JQ8400_Serial::currentFileName(char *buffer, unsigned int bufferLength) 
     {
       this->sendCommand(MP3_CMD_CURRENT_FILE_NAME, 0, 0, buffer, bufferLength);
     }
     
     // Used for the status commands, they mostly return an 8 to 16 bit integer 
     // and take no arguments
-    unsigned int JQ6500_Serial::sendCommandWithUnsignedIntResponse(byte command)
+    unsigned int JQ8400_Serial::sendCommandWithUnsignedIntResponse(byte command)
     {      
       char buffer[5];
       this->sendCommand(command, 0, 0, buffer, sizeof(buffer));
+      return ((uint8_t)buffer[0]<<8) | ((uint8_t)buffer[1]);
       return (unsigned int) strtoul(buffer, NULL, 16);
     }
     
-    void  JQ6500_Serial::sendCommand(byte command)
+    uint8_t JQ8400_Serial::sendCommandWithByteResponse(uint8_t command)
     {
-      this->sendCommand(command, 0, 0, 0, 0);
+      uint8_t response = 0;
+      this->sendCommandData(command, 0, 0, &response, 1);
+      return response;
     }
     
-    void  JQ6500_Serial::sendCommand(byte command, byte arg1)
+    void  JQ8400_Serial::sendCommand(byte command)
+    {
+      this->sendCommand(command, (uint8_t)0, 0, 0, 0);
+    }
+    
+    void  JQ8400_Serial::sendCommand(byte command, byte arg1)
     {
        this->sendCommand(command, arg1, 0, 0, 0);
     }
     
-    void  JQ6500_Serial::sendCommand(byte command, byte arg1, byte arg2)
+    void  JQ8400_Serial::sendCommand(byte command, byte arg1, byte arg2)
     {
        this->sendCommand(command, arg1, arg2, 0, 0);
     }    
     
-    void  JQ6500_Serial::sendCommand(byte command, byte arg1, byte arg2, char *responseBuffer, unsigned int bufferLength)
+    void  JQ8400_Serial::sendCommand(byte command, uint8_t arg1, uint8_t arg2, char *responseBuffer, unsigned int bufferLength)
     {
-      
-      
-      // Command structure
-      // [7E][number bytes following including command and terminator][command byte][?arg1][?arg2][EF]
-      
       // Most commands do not have arguments
       byte args = 0;
       
@@ -234,39 +271,67 @@ void  JQ6500_Serial::reset()
         case MP3_CMD_VOL_SET: args = 1; break;
         case MP3_CMD_EQ_SET: args = 1; break;        
         case MP3_CMD_SOURCE_SET: args = 1; break;
-        case MP3_CMD_PREV_FOLDER: args = 1; break; // Also MP3_CMD_NEXT_FOLDER
+        
         case MP3_CMD_LOOP_SET: args = 1; break;
         case MP3_CMD_PLAY_FILE_FOLDER: args = 2; break;
       }
+      
+      switch(args)
+      {
+        case 0:
+          sendCommandData(command, (uint8_t *)0, (uint8_t)0, (uint8_t *)responseBuffer, bufferLength);
+          return;
+          
+        case 1:
+          sendCommandData(command, &arg1, (uint8_t)1, (uint8_t *)responseBuffer, bufferLength);
+          return;
+          
+        case 2:
+          uint8_t both[2] = {arg1, arg2};
+          sendCommandData(command, &both[0], (uint8_t)2, (uint8_t *)responseBuffer, bufferLength);
+          return;
+      }
+      
+      return;
+      
+      #if 0
+      // Calculate the checksum which forms the end byte
+      uint8_t MP3_CHECKSUM = ((uint16_t)MP3_CMD_BEGIN + command + ( args) + (args >= 1 ? arg1 : 0) +  (args >= 2 ? arg2 : 0)) & 0xFF;
       
 #if MP3_DEBUG
       char buf[4];       
       Serial.println();
       Serial.print(MP3_CMD_BEGIN, HEX); Serial.print(" ");
-      itoa(2+args, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));
       itoa(command, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));
+      itoa(args, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));      
       if(args>=1) itoa(arg1, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));
       if(args>=2) itoa(arg2, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));
-      Serial.print(MP3_CMD_END, HEX);      
+      Serial.print(MP3_CHECKSUM, HEX);      
 #endif
       
       // The device appears to send some sort of status information (namely "STOP" when it stops playing)
       // just discard this right before we send the command
       while(this->waitUntilAvailable(10)) this->read();
-      
-      this->write((byte)MP3_CMD_BEGIN);
-      this->write(2+args);
+
+      this->write(MP3_CMD_BEGIN);
       this->write(command);
+      this->write(args);
       if(args>=1) this->write(arg1);
-      if(args==2) this->write(arg2);
-      this->write((byte)MP3_CMD_END);
+      if(args>=2) this->write(arg2);
+      this->write(MP3_CHECKSUM);
       
       
-      unsigned int i = 0;
+      
       char         j = 0;
       if(responseBuffer && bufferLength) 
       {
         memset(responseBuffer, 0, bufferLength);
+      }
+      
+      // If we don't expect a response (or don't care) don't wait for ones
+      else
+      {
+        return;
       }
       
       // Allow some time for the device to process what we did and 
@@ -278,21 +343,214 @@ void  JQ6500_Serial::reset()
       Serial.print(" ==> [");
 #endif
       
+      // The response format is the same as the command format
+      //  AA [CMD] [DATA_COUNT] [B1..N] [SUM]
+      MP3_CHECKSUM = 0;
+      
+      unsigned int i = 0;                          
+      uint8_t      dataCount = 0;
       while(this->waitUntilAvailable(150))
       {
         j = (char)this->read();
-        
+                
 #if MP3_DEBUG
-        Serial.print(j);
+        HEX_PRINT((uint8_t)j); Serial.print(" ");
 #endif
-        if(responseBuffer && (i<(bufferLength-1)))
+        if(i == 2)
         {
-           responseBuffer[i++] = j;
+          // The number of data bytes to read
+          dataCount = (uint8_t)j;
+        }
+        
+        // We only record the data bytes so bytes 0,1 and 2 are discarded
+        //   except for calculating checksum
+        if(i <= 2) 
+        {
+          MP3_CHECKSUM += j;
+          i++;
+          continue;
+        }
+        else
+        {
+          if(dataCount > 0)
+          {
+            // This is a databyte to read
+            if((i-3) < (bufferLength-1))
+            {
+              responseBuffer[i-3] = j;
+            }
+            i++;
+            dataCount--;
+            MP3_CHECKSUM += j;
+          }
+          else
+          {
+            // This is the checksum byte
+            if((MP3_CHECKSUM & 0xFF) != (uint8_t) j)
+            {
+              // Checksum Failed
+              #if MP3_DEBUG
+                Serial.print(" ** CHECKSUM FAILED " );
+                HEX_PRINT((MP3_CHECKSUM & 0xFF)); 
+                Serial.print(" != ");
+                HEX_PRINT(uint8_t(j)); 
+              #endif
+              memset(responseBuffer, 0, bufferLength);
+            }
+            else
+            {
+               #if MP3_DEBUG
+                Serial.print(" ** CHECKSUM OK " );
+                HEX_PRINT((MP3_CHECKSUM & 0xFF)); 
+                Serial.print(" == ");
+                HEX_PRINT(uint8_t(j)); 
+              #endif
+            }
+          }
         }
       }
       
 #if MP3_DEBUG      
-      Serial.print("]");
+      Serial.print("] --> ");
+      Serial.print(responseBuffer[1],HEX);
+      Serial.println();
+#endif
+     #endif
+    }
+    
+    void  JQ8400_Serial::sendCommandData(byte command, uint8_t *requestBuffer, uint8_t requestLength, uint8_t *responseBuffer, unsigned int bufferLength)
+    {
+      // Calculate the checksum which forms the end byte
+      uint8_t MP3_CHECKSUM = MP3_CMD_BEGIN + command + requestLength;
+      
+      for(uint8_t x = 0; x < requestLength; x++)
+      {
+        MP3_CHECKSUM += (uint8_t)requestBuffer[x];
+      }
+      
+#if MP3_DEBUG
+      Serial.println();
+      
+      HEX_PRINT(MP3_CMD_BEGIN);  Serial.print(" ");
+      HEX_PRINT(command);        Serial.print(" ");
+      HEX_PRINT(requestLength);  Serial.print(" ");
+      
+      for(uint8_t x = 0; x < requestLength; x++)
+      {
+          HEX_PRINT(requestBuffer[x]); 
+          Serial.print(' ');
+      }
+      
+      HEX_PRINT(MP3_CHECKSUM);  Serial.print(" ");
+#endif
+      
+      // If there is any random garbage on the line, clear that out now.
+      while(this->waitUntilAvailable(10)) this->read();
+
+      this->write(MP3_CMD_BEGIN);
+      this->write(command);
+      this->write(requestLength);
+      for(uint8_t x = 0; x < requestLength; x++)
+      {
+          this->write(requestBuffer[x]);
+      }
+      this->write(MP3_CHECKSUM);
+            
+      if(responseBuffer && bufferLength) 
+      {
+        memset(responseBuffer, 0, bufferLength);
+      }
+      
+      // If we don't expect a response (or don't care) don't wait for ones
+      else
+      {
+        return;
+      }
+      
+      // Allow some time for the device to process what we did and 
+      // respond, up to 1 second, but typically only a few ms.
+      this->waitUntilAvailable(1000);
+
+      
+#if MP3_DEBUG
+      Serial.print(" ==> [");
+#endif
+      
+      // The response format is the same as the command format
+      //  AA [CMD] [DATA_COUNT] [B1..N] [SUM]
+      MP3_CHECKSUM = 0;
+      
+      uint16_t     i = 0;
+      uint8_t      j = 0;
+      uint8_t      dataCount = 0;
+      while(this->waitUntilAvailable(150))
+      {
+        j = this->read();
+                
+#if MP3_DEBUG
+        HEX_PRINT(j); Serial.print(" ");
+#endif
+        if(i == 2)
+        {
+          // The number of data bytes to read
+          dataCount = j;
+        }
+        
+        // We only record the data bytes so bytes 0,1 and 2 are discarded
+        //   except for calculating checksum
+        if(i <= 2) 
+        {
+          MP3_CHECKSUM += j;
+          i++;
+          continue;
+        }
+        else
+        {
+          if(dataCount > 0)
+          {
+            // This is a databyte to read
+            if((i-3) <= (bufferLength-1))
+            {
+              responseBuffer[i-3] = j;
+            }
+            i++;
+            dataCount--;
+            MP3_CHECKSUM += j;
+          }
+          else
+          {
+            // This is the checksum byte
+            if((MP3_CHECKSUM & 0xFF) != j)
+            {
+              // Checksum Failed
+              #if MP3_DEBUG
+                Serial.print(" ** CHECKSUM FAILED " );
+                HEX_PRINT((MP3_CHECKSUM & 0xFF)); 
+                Serial.print(" != ");
+                HEX_PRINT(j); 
+              #endif
+              memset(responseBuffer, 0, bufferLength);
+            }
+            else
+            {
+               #if MP3_DEBUG
+                Serial.print(" ** CHECKSUM OK " );
+                HEX_PRINT((MP3_CHECKSUM & 0xFF)); 
+                Serial.print(" == ");
+                HEX_PRINT(j); 
+              #endif
+            }
+          }
+        }
+      }
+      
+#if MP3_DEBUG      
+      Serial.print("] --> ");
+      for(uint8_t x = 0; x < bufferLength; x++)
+      {
+        HEX_PRINT(responseBuffer[x]);
+      }
+      
       Serial.println();
 #endif
       
@@ -303,7 +561,7 @@ void  JQ6500_Serial::reset()
 // terminates if length characters have been read, timeout, or if the terminator character  detected
 // returns the number of characters placed in the buffer (0 means no valid data found)
 
-size_t JQ6500_Serial::readBytesUntilAndIncluding(char terminator, char *buffer, size_t length, byte maxOneLineOnly)
+size_t JQ8400_Serial::readBytesUntilAndIncluding(char terminator, char *buffer, size_t length, byte maxOneLineOnly)
 {
     if (length < 1) return 0;
   size_t index = 0;
@@ -320,7 +578,7 @@ size_t JQ6500_Serial::readBytesUntilAndIncluding(char terminator, char *buffer, 
 
 
 // Waits until data becomes available, or a timeout occurs
-int JQ6500_Serial::waitUntilAvailable(unsigned long maxWaitTime)
+int JQ8400_Serial::waitUntilAvailable(unsigned long maxWaitTime)
 {
   unsigned long startTime;
   int c = 0;
