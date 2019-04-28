@@ -42,25 +42,23 @@
 #define MP3_SRC_FLASH     2
 #define MP3_SRC_BUILTIN   MP3_SRC_FLASH
 
-// Looping options, ALL, FOLDER, ONE and ONE_STOP are the 
-// only ones that appear to do much interesting
-//  ALL plays all the tracks in a repeating loop
-//  FOLDER plays all the tracks in the same folder in a repeating loop
-//  ONE plays the same track repeating
-//  ONE_STOP does not loop, plays the track and stops
-//  RAM seems to play one track and someties disables the ability to 
-//  move to next/previous track, really weird.
+// Loop Options
+//   ALL = all tracks loop, ALL_STOP all tracks then stop, ALL_RANDOM all tracks randomly
+//   ONE = one track loop, ONE_STOP (default) one track then stop
+//   FOLDER = tracks within folder loop, FOLDER_STOP tracks within folder then stop, FOLDER_RANDOM random in folder
 
-#define MP3_LOOP_ALL      0
-#define MP3_LOOP_ONE      1
-#define MP3_LOOP_ONE_STOP 2
-#define MP3_LOOP_RANDOM   3
-#define MP3_LOOP_FOLDER   4
-#define MP3_LOOP_RANDOM_RANDOM   5
-#define MP3_LOOP_FOLDER_STOP     6
+#define MP3_LOOP_ALL             0
 #define MP3_LOOP_ALL_STOP        7
+#define MP3_LOOP_ALL_RANDOM      3
 
-#define MP3_LOOP_NONE            0 
+#define MP3_LOOP_ONE             1
+#define MP3_LOOP_ONE_STOP        2
+
+#define MP3_LOOP_FOLDER          4
+#define MP3_LOOP_FOLDER_RANDOM   5
+#define MP3_LOOP_FOLDER_STOP     6
+
+#define MP3_LOOP_NONE            2 
 
 #define MP3_STATUS_STOPPED 0
 #define MP3_STATUS_PLAYING 1
@@ -239,11 +237,23 @@ class JQ8400_Serial : public SoftwareSerial
      * 
      * @param loopMode One of the following,
      * 
-     *  *  MP3_LOOP_ALL       - Loop through all files.
-     *  *  MP3_LOOP_FOLDER    - Loop through all files in the same folder (SD Card only)
-     *  *  MP3_LOOP_ONE       - Loop one file.
-     *  *  MP3_LOOP_RAM       - Loop one file (uncertain how it is different to the previous!)
-     *  *  MP3_LOOP_NONE      - No loop, just play one file and then stop. (aka MP3_LOOP_ONE_STOP)
+     *  *  MP3_LOOP_NONE          - No loop, just play one file and then stop. (aka MP3_LOOP_ONE_STOP)
+     *  *  MP3_LOOP_ONE           - Loop one file over and over and over again.
+     * 
+     *  *  MP3_LOOP_ALL           - Play through all files and repeat.
+     *  *  MP3_LOOP_ALL_STOP      - Play through all files and stop.
+     *  *  MP3_LOOP_ALL_RANDOM    - Play all files randomly (continuously)
+     * 
+     *  *  MP3_LOOP_FOLDER        - Play through all files in the same folder and repeat.
+     *  *  MP3_LOOP_FOLDER_STOP   - Play through all files in the same folder and stop
+     *  *  MP3_LOOP_FOLDER_RANDOM - Play through all files in the same folder randomly (continuously)
+     * 
+     *  Note that the random options are perhaps not that optimal especially with low
+     *   file counts, a track playing twice back to back is not unusual, and the randomness
+     *   does not anecdotally seem all that random.  (NB: These random options are implemented
+     *   inside the JQ8400 device itself, not in code, you could make your own randomiser
+     *   and just use play by index etc...)
+     * 
      */
     
     void setLoopMode(byte loopMode);
@@ -257,7 +267,7 @@ class JQ8400_Serial : public SoftwareSerial
      *   * MP3_SRC_USB        - Files from a connected USB device?  I have not seen modules capable of this, but possible?
      */
     
-    void setSource(byte source);        // SRC_BUILTIN or SRC_SDCARD       
+    void setSource(byte source);
     
     /** Return the currently selected source.
      * 
@@ -280,7 +290,7 @@ class JQ8400_Serial : public SoftwareSerial
      * @return bool
      */
     
-    uint8_t isSourceAvailable(uint8_t source)
+    uint8_t sourceAvailable(uint8_t source)
     {
       return getAvailableSources() & 1<<source;
     }
@@ -310,17 +320,8 @@ class JQ8400_Serial : public SoftwareSerial
     
     void reset();
     
-    // Status querying commands
     /** Get the status from the device.
      * 
-     * CAUTION!  This is somewhat unreliable for the following reasons...
-     * 
-     *  1. When playing from the on board memory (MP3_SRC_BUILTIN), STOPPED sems
-     *     to never be returned, only PLAYING and PAUSED
-     *  2. Sometimes PAUSED is returned when it is PLAYING, to try and catch this
-     *     getStatus() actually queries the module several times to ensure that
-     *     it is really sure about what it tells us.
-     *
      * @return One of MP3_STATUS_PAUSED, MP3_STATUS_PLAYING and MP3_STATUS_STOPPED
      */
     
@@ -358,13 +359,18 @@ class JQ8400_Serial : public SoftwareSerial
     
     /** Get loop mode.
      * 
-     * @return One of the following,
+     * @return One of the loop modes as follows...
      * 
-     *  *  MP3_LOOP_ALL       - Loop through all files.
-     *  *  MP3_LOOP_FOLDER    - Loop through all files in the same folder (SD Card only)
-     *  *  MP3_LOOP_ONE       - Loop one file.
-     *  *  MP3_LOOP_RAM       - Loop one file (uncertain how it is different to the previous!)
-     *  *  MP3_LOOP_NONE      - No loop, just play one file and then stop. (aka MP3_LOOP_ONE_STOP)
+     *  *  MP3_LOOP_NONE          - No loop, just play one file and then stop. (aka MP3_LOOP_ONE_STOP)
+     *  *  MP3_LOOP_ONE           - Loop one file over and over and over again.
+     * 
+     *  *  MP3_LOOP_ALL           - Play through all files and repeat.
+     *  *  MP3_LOOP_ALL_STOP      - Play through all files and stop.
+     *  *  MP3_LOOP_ALL_RANDOM    - Play all files randomly (continuously)
+     * 
+     *  *  MP3_LOOP_FOLDER        - Play through all files in the same folder and repeat.
+     *  *  MP3_LOOP_FOLDER_STOP   - Play through all files in the same folder and stop
+     *  *  MP3_LOOP_FOLDER_RANDOM - Play through all files in the same folder randomly (continuously)
      */
     
     byte getLoopMode();
@@ -454,16 +460,52 @@ class JQ8400_Serial : public SoftwareSerial
     uint8_t sendCommandWithByteResponse(uint8_t command);
 
     
-    
     /** Return a bitmask of the available sources.
+     * 
+     * @return Bitmask indicating which sources are connected to the module.
+     * 
+     *    bit 0 = USB
+     *    bit 1 = SD
+     *    bit 2 = FLASH
      */
     
     uint8_t getAvailableSources();
     
+    
+    /** Read bytes until and including a terminator character.
+     * 
+     * Note that no null termination is added, do it yourself.
+     * 
+     * @param terminator Character to indicate end of input.
+     * @param buffer     Buffer to place received characters.
+     * @param length     Length of buffer.
+     * @param maxOneLineOnly boolean to indicate if can span lines.
+     *
+     * @return Number of bytes read.
+     */
+    
     size_t readBytesUntilAndIncluding(char terminator, char *buffer, size_t length, byte maxOneLineOnly = 0);
+    
+    /** Blocking wait with a timeout for serial input.
+     * 
+     * @param maxWaitTime Milliseconds
+     * @return bool Available (True) / Timed Out (False)
+     */
     
     int    waitUntilAvailable(unsigned long maxWaitTime = 1000);
     
+    
+    /** 
+     * The JQ8400 does not have commands to query the volume, eq or playing mode
+     *   so we have to keep track of that ourselves unfortunately.
+     */
+    
+    uint8_t currentVolume = 20;
+    uint8_t currentEq     = 0;
+    uint8_t currentLoop   = 2;
+    
+    
+
     static const uint8_t MP3_CMD_BEGIN = 0xAA;
     
     static const uint8_t MP3_CMD_PLAY = 0x02;
@@ -471,12 +513,11 @@ class JQ8400_Serial : public SoftwareSerial
     
     static const uint8_t MP3_CMD_STOP = 0x10; // Not sure, maybe 0x04?
     
-    
     static const uint8_t MP3_CMD_NEXT = 0x06;
     static const uint8_t MP3_CMD_PREV = 0x05;
     static const uint8_t MP3_CMD_PLAY_IDX = 0x07;
     static const uint8_t MP3_CMD_SEEK_IDX = 0x1F;
-    static const uint8_t MP3_CMD_INSERT_IDX = 0x16; // FIXME - Implement
+      static const uint8_t MP3_CMD_INSERT_IDX = 0x16; // FIXME - Implement
     
     
     static const uint8_t MP3_CMD_NEXT_FOLDER = 0x0F;
@@ -499,33 +540,17 @@ class JQ8400_Serial : public SoftwareSerial
     
     static const uint8_t MP3_CMD_GET_SOURCES = 0x09;
     static const uint8_t MP3_CMD_GET_SOURCE  = 0x0A;
+        
+    static const uint8_t MP3_CMD_COUNT_FILES     = 0x0C; 
+    static const uint8_t MP3_CMD_COUNT_IN_FOLDER = 0x12; 
     
-    uint8_t currentVolume = 20;
-    uint8_t currentEq     = 0;
-    uint8_t currentLoop   = 2;
-    
-    // static const uint8_t MP3_CMD_VOL_GET = 0x43; // FIXME
-    // static const uint8_t MP3_CMD_EQ_GET = 0x44; // FIXME
-    // static const uint8_t MP3_CMD_LOOP_GET = 0x45; // FIXME
-    // static const uint8_t MP3_CMD_VER_GET = 0x46; // FIXME
-    
-    // static const uint8_t MP3_CMD_COUNT_SD  = 0x0C;
-    // static const uint8_t MP3_CMD_COUNT_MEM = 0x0C; 
-    static const uint8_t MP3_CMD_COUNT_FILES     = 0x0C; // FIXME - No Difference for 8400?
-    static const uint8_t MP3_CMD_COUNT_IN_FOLDER = 0x12; // FIXME - Implement
-    
-    // static const uint8_t MP3_CMD_COUNT_FOLDERS        = 0x53;    // Not supported by JQ8400?
-    // static const uint8_t MP3_CMD_CURRENT_FILE_IDX_SD  = 0x0D;
-    // static const uint8_t MP3_CMD_CURRENT_FILE_IDX_MEM = 0x0D; 
-    static const uint8_t MP3_CMD_CURRENT_FILE_IDX         = 0x0D; // FIXME - No Difference for 8400?   
-    static const uint8_t MP3_CMD_FIRST_FILE_IN_FOLDER_IDX = 0x11; // FIXME - Implement
-    
+    static const uint8_t MP3_CMD_CURRENT_FILE_IDX         = 0x0D; 
+    static const uint8_t MP3_CMD_FIRST_FILE_IN_FOLDER_IDX = 0x11; 
     
     static const uint8_t MP3_CMD_CURRENT_FILE_LEN = 0x24;
     static const uint8_t MP3_CMD_CURRENT_FILE_POS = 0x25; // This turns on continuous reporting of position
     static const uint8_t MP3_CMD_CURRENT_FILE_POS_STOP = 0x26; // This stops that
     static const uint8_t MP3_CMD_CURRENT_FILE_NAME = 0x1E;
-    
     
 };
 

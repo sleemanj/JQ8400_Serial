@@ -7,8 +7,6 @@
  * @file
  */
 
-#include <Arduino.h>
-#include <SoftwareSerial.h>
 #include <JQ6500_Serial.h>
 
 // Create the mp3 module object, 
@@ -77,7 +75,6 @@ void loop() {
             case 'R': Serial.println("Rock");    mp3.setEqualizer(MP3_EQ_ROCK);    break;
             case 'J': Serial.println("Jazz");    mp3.setEqualizer(MP3_EQ_JAZZ);    break;
             case 'C': Serial.println("Classic"); mp3.setEqualizer(MP3_EQ_CLASSIC); break;
-            case 'B': Serial.println("Bass");    mp3.setEqualizer(MP3_EQ_BASS);    break;
           }
         }
         return;
@@ -214,8 +211,7 @@ void statusAndHelpOutput()
      case MP3_EQ_POP:        Serial.println(F("Pop"));     break;
      case MP3_EQ_ROCK:       Serial.println(F("Rock"));    break;
      case MP3_EQ_JAZZ:       Serial.println(F("Jazz"));    break;
-     case MP3_EQ_CLASSIC:    Serial.println(F("Classic")); break;
-     case MP3_EQ_BASS:       Serial.println(F("Bass"));    break;     
+     case MP3_EQ_CLASSIC:    Serial.println(F("Classic")); break; 
    }
    
    Serial.print(F("Loop Mode        : "));
@@ -229,27 +225,37 @@ void statusAndHelpOutput()
    }
    Serial.println();
     
+   uint8_t currentSource = mp3.getSource();
+   
+   mp3.setSource(MP3_SRC_BUILTIN);
    Serial.print(F("# of On Board Memory Files    : "));
-   Serial.println(mp3.countFiles(MP3_SRC_BUILTIN));
-       
-   Serial.print(F("\"Current\" On Board Memory File Index: "));
-   Serial.println(mp3.currentFileIndexNumber(MP3_SRC_BUILTIN));
+   Serial.println(mp3.countFiles());
+   
+   if(mp3.sourceAvailable(MP3_SRC_SDCARD))
+   {
+     mp3.setSource(MP3_SRC_SDCARD);
+     Serial.print(F("# of SD Card Files    : "));
+     Serial.println(mp3.countFiles(MP3_SRC_SDCARD));
+   }
+   else
+   {
+     Serial.println(F("SD Card Not Available"));
+   }
+   
+   if(currentSource != mp3.getSource())
+   {
+     mp3.setSource(currentSource);
+   }
+   
+   Serial.print(F("\"Current\" File Index: "));
+   Serial.println(mp3.currentFileIndexNumber());
    Serial.println();
    
-   Serial.print(F("# of SD Card Files    : "));
-   Serial.println(mp3.countFiles(MP3_SRC_SDCARD));
-   
-   Serial.print(F("# of SD Card Folders  : "));
-   Serial.println(mp3.countFolders(MP3_SRC_SDCARD));
-   
-   Serial.print(F("\"Current\" SD Card File Index: "));
-   Serial.println(mp3.currentFileIndexNumber(MP3_SRC_SDCARD));
-   
-   Serial.print(F("\"Current\" SD Card File Name : "));   
+   Serial.print(F("\"Current\" File Name : "));   
    char buff[120];
    mp3.currentFileName(buff, sizeof(buff));
    Serial.println(buff);
-   
+      
    Serial.println();
    Serial.println(F("Controls (type in serial monitor and hit send): "));
    Serial.println(F("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"));
@@ -259,6 +265,6 @@ void statusAndHelpOutput()
    
    Serial.println(F("f[1-65534]      Play file by (FAT table) index number\nF[01-99]/[001-999].mp3 Play [001-999].mp3 in folder [01-99]\n"));
    
-   Serial.println(F("+ Vol up\t- Vol down\tm Mute\nv[0-30] Set volume\n\ne[N/P/R/J/C/B] Equalizer (N)ormal, (P)op, (R)ock, (J)azz, (C)lassic, (B)ass\nl[A/F/O/R/N]   Loop (A)ll, (F)older, (O)ne, (R)???, (N)o Loop\ns[S/B]         Switch to (S)D Card/(B)uilt In Memory\n\n"));
+   Serial.println(F("+ Vol up\t- Vol down\tm Mute\nv[0-30] Set volume\n\ne[N/P/R/J/C/B] Equalizer (N)ormal, (P)op, (R)ock, (J)azz, (C)lassic\nl[A/F/O/R/N]   Loop (A)ll, (F)older, (O)ne, (R)???, (N)o Loop\ns[S/B]         Switch to (S)D Card/(B)uilt In Memory\n\n"));
 }
 
