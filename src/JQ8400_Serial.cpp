@@ -62,22 +62,22 @@ void  JQ8400_Serial::prev()
   this->sendCommand(MP3_CMD_PREV);
 }
 
-void  JQ8400_Serial::playFileByIndexNumber(unsigned int fileNumber)
+void  JQ8400_Serial::playFileByIndexNumber(uint16_t fileNumber)
 {  
-  this->sendCommand(MP3_CMD_PLAY_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
+  // this->sendCommand(MP3_CMD_PLAY_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
+  this->sendCommand(MP3_CMD_PLAY_IDX, fileNumber);
 }
 
 void  JQ8400_Serial::interjectFileByIndexNumber(unsigned int fileNumber)
 {  
   uint8_t buf[3] = { getSource(), (uint8_t)((fileNumber>>8)&0xFF), (uint8_t)(fileNumber & (byte)0xFF) };
   this->sendCommandData(MP3_CMD_INSERT_IDX, buf, 3, 0, 0);
-  return;
-  this->sendCommand(MP3_CMD_INSERT_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
 }
 
 void  JQ8400_Serial::seekFileByIndexNumber(unsigned int fileNumber)
 {  
-  this->sendCommand(MP3_CMD_SEEK_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
+  // this->sendCommand(MP3_CMD_SEEK_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
+  this->sendCommand(MP3_CMD_SEEK_IDX, fileNumber);
 }
 
 void JQ8400_Serial::abLoopPlay(uint16_t secondsStart, uint16_t secondsEnd)
@@ -93,12 +93,14 @@ void JQ8400_Serial::abLoopClear()
 
 void JQ8400_Serial::fastForward(uint16_t seconds)
 {
-  this->sendCommand(MP3_CMD_FFWD, (seconds>>8)&0xFF, seconds&0xFF);
+  //this->sendCommand(MP3_CMD_FFWD, (seconds>>8)&0xFF, seconds&0xFF);
+  this->sendCommand(MP3_CMD_FFWD, seconds);
 }
 
 void JQ8400_Serial::rewind(uint16_t seconds)
 {
-  this->sendCommand(MP3_CMD_RWND, (seconds>>8)&0xFF, seconds&0xFF);
+  //this->sendCommand(MP3_CMD_RWND, (seconds>>8)&0xFF, seconds&0xFF);
+  this->sendCommand(MP3_CMD_RWND, seconds);
 }
 
 void  JQ8400_Serial::nextFolder()
@@ -369,206 +371,28 @@ void  JQ8400_Serial::reset()
     
     void          JQ8400_Serial::currentFileName(char *buffer, unsigned int bufferLength) 
     {
-      this->sendCommand(MP3_CMD_CURRENT_FILE_NAME, 0, 0, buffer, bufferLength);
+      // this->sendCommand(MP3_CMD_CURRENT_FILE_NAME, 0, 0, buffer, bufferLength);
+      this->sendCommand(MP3_CMD_CURRENT_FILE_NAME, (uint8_t *)buffer, bufferLength);
       buffer[bufferLength-1] = 0; // Ensure null termination since this is a string.
     }
     
     // Used for the status commands, they mostly return an 8 to 16 bit integer 
     // and take no arguments
-    unsigned int JQ8400_Serial::sendCommandWithUnsignedIntResponse(byte command)
+    uint16_t JQ8400_Serial::sendCommandWithUnsignedIntResponse(byte command)
     {      
-      char buffer[5];
-      this->sendCommand(command, 0, 0, buffer, sizeof(buffer));
+      uint8_t buffer[4];
+      this->sendCommand(command, buffer, sizeof(buffer));
       return ((uint8_t)buffer[0]<<8) | ((uint8_t)buffer[1]);
-      return (unsigned int) strtoul(buffer, NULL, 16);
     }
     
     uint8_t JQ8400_Serial::sendCommandWithByteResponse(uint8_t command)
     {
       uint8_t response = 0;
-      this->sendCommandData(command, 0, 0, &response, 1);
+      this->sendCommand(command, &response, 1);
       return response;
     }
     
-    void  JQ8400_Serial::sendCommand(byte command)
-    {
-      this->sendCommand(command, (uint8_t)0, 0, 0, 0);
-    }
-    
-    void  JQ8400_Serial::sendCommand(byte command, byte arg1)
-    {
-       this->sendCommand(command, arg1, 0, 0, 0);
-    }
-    
-    void  JQ8400_Serial::sendCommand(byte command, byte arg1, byte arg2)
-    {
-       this->sendCommand(command, arg1, arg2, 0, 0);
-    }    
-    
-    void  JQ8400_Serial::sendCommand(byte command, uint8_t arg1, uint8_t arg2, char *responseBuffer, unsigned int bufferLength)
-    {
-      // Most commands do not have arguments
-      byte args = 0;
-      
-      // These ones do
-      switch(command)
-      {        
-        case MP3_CMD_FFWD:
-        case MP3_CMD_RWND:
-        case MP3_CMD_SEEK_IDX: args = 2; break;
-        case MP3_CMD_INSERT_IDX:args = 2; break;
-        case MP3_CMD_PLAY_IDX: args = 2; break;
-        case MP3_CMD_VOL_SET: args = 1; break;
-        case MP3_CMD_EQ_SET: args = 1; break;        
-        case MP3_CMD_SOURCE_SET: args = 1; break;
-        
-        case MP3_CMD_LOOP_SET: args = 1; break;
-        case MP3_CMD_PLAY_FILE_FOLDER: args = 2; break;
-      }
-      
-      switch(args)
-      {
-        case 0:
-          sendCommandData(command, (uint8_t *)0, (uint8_t)0, (uint8_t *)responseBuffer, bufferLength);
-          return;
-          
-        case 1:
-          sendCommandData(command, &arg1, (uint8_t)1, (uint8_t *)responseBuffer, bufferLength);
-          return;
-          
-        case 2:
-          uint8_t both[2] = {arg1, arg2};
-          sendCommandData(command, &both[0], (uint8_t)2, (uint8_t *)responseBuffer, bufferLength);
-          return;
-      }
-      
-      return;
-      
-      #if 0
-      // Calculate the checksum which forms the end byte
-      uint8_t MP3_CHECKSUM = ((uint16_t)MP3_CMD_BEGIN + command + ( args) + (args >= 1 ? arg1 : 0) +  (args >= 2 ? arg2 : 0)) & 0xFF;
-      
-#if MP3_DEBUG
-      char buf[4];       
-      Serial.println();
-      Serial.print(MP3_CMD_BEGIN, HEX); Serial.print(" ");
-      itoa(command, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));
-      itoa(args, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));      
-      if(args>=1) itoa(arg1, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));
-      if(args>=2) itoa(arg2, buf, 16); Serial.print(buf); Serial.print(" "); memset(buf, 0, sizeof(buf));
-      Serial.print(MP3_CHECKSUM, HEX);      
-#endif
-      
-      // The device appears to send some sort of status information (namely "STOP" when it stops playing)
-      // just discard this right before we send the command
-      while(this->waitUntilAvailable(10)) this->read();
-
-      this->write(MP3_CMD_BEGIN);
-      this->write(command);
-      this->write(args);
-      if(args>=1) this->write(arg1);
-      if(args>=2) this->write(arg2);
-      this->write(MP3_CHECKSUM);
-      
-      
-      
-      char         j = 0;
-      if(responseBuffer && bufferLength) 
-      {
-        memset(responseBuffer, 0, bufferLength);
-      }
-      
-      // If we don't expect a response (or don't care) don't wait for ones
-      else
-      {
-        return;
-      }
-      
-      // Allow some time for the device to process what we did and 
-      // respond, up to 1 second, but typically only a few ms.
-      this->waitUntilAvailable(1000);
-
-      
-#if MP3_DEBUG
-      Serial.print(" ==> [");
-#endif
-      
-      // The response format is the same as the command format
-      //  AA [CMD] [DATA_COUNT] [B1..N] [SUM]
-      MP3_CHECKSUM = 0;
-      
-      unsigned int i = 0;                          
-      uint8_t      dataCount = 0;
-      while(this->waitUntilAvailable(150))
-      {
-        j = (char)this->read();
-                
-#if MP3_DEBUG
-        HEX_PRINT((uint8_t)j); Serial.print(" ");
-#endif
-        if(i == 2)
-        {
-          // The number of data bytes to read
-          dataCount = (uint8_t)j;
-        }
-        
-        // We only record the data bytes so bytes 0,1 and 2 are discarded
-        //   except for calculating checksum
-        if(i <= 2) 
-        {
-          MP3_CHECKSUM += j;
-          i++;
-          continue;
-        }
-        else
-        {
-          if(dataCount > 0)
-          {
-            // This is a databyte to read
-            if((i-3) < (bufferLength-1))
-            {
-              responseBuffer[i-3] = j;
-            }
-            i++;
-            dataCount--;
-            MP3_CHECKSUM += j;
-          }
-          else
-          {
-            // This is the checksum byte
-            if((MP3_CHECKSUM & 0xFF) != (uint8_t) j)
-            {
-              // Checksum Failed
-              #if MP3_DEBUG
-                Serial.print(" ** CHECKSUM FAILED " );
-                HEX_PRINT((MP3_CHECKSUM & 0xFF)); 
-                Serial.print(" != ");
-                HEX_PRINT(uint8_t(j)); 
-              #endif
-              memset(responseBuffer, 0, bufferLength);
-            }
-            else
-            {
-               #if MP3_DEBUG
-                Serial.print(" ** CHECKSUM OK " );
-                HEX_PRINT((MP3_CHECKSUM & 0xFF)); 
-                Serial.print(" == ");
-                HEX_PRINT(uint8_t(j)); 
-              #endif
-            }
-          }
-        }
-      }
-      
-#if MP3_DEBUG      
-      Serial.print("] --> ");
-      Serial.print(responseBuffer[1],HEX);
-      Serial.println();
-#endif
-     #endif
-    }
-    
-    void  JQ8400_Serial::sendCommandData(byte command, uint8_t *requestBuffer, uint8_t requestLength, uint8_t *responseBuffer, unsigned int bufferLength)
+    void  JQ8400_Serial::sendCommandData(uint8_t command, uint8_t *requestBuffer, uint8_t requestLength, uint8_t *responseBuffer, uint8_t bufferLength)
     {
       // Calculate the checksum which forms the end byte
       uint8_t MP3_CHECKSUM = MP3_CMD_BEGIN + command + requestLength;
@@ -630,7 +454,7 @@ void  JQ8400_Serial::reset()
       //  AA [CMD] [DATA_COUNT] [B1..N] [SUM]
       MP3_CHECKSUM = 0;
       
-      uint16_t     i = 0;
+      uint8_t      i = 0;
       uint8_t      j = 0;
       uint8_t      dataCount = 0;
       while(this->waitUntilAvailable(150))

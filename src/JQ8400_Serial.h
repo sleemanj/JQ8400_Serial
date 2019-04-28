@@ -546,25 +546,56 @@ class JQ8400_Serial : public SoftwareSerial
     
     
   protected:
-    
+
     /** Send a command to the JQ8400 module, 
+     * 
      * @param command        Byte value of to send as from the datasheet.
-     * @param arg1           First (if any) argument byte
-     * @param arg2           Second (if any) argument byte
-     * @param responseBuffer Buffer to store a single line of response, if NULL, no response is read.
-     * @param buffLength     Length of response buffer including NULL terminator.
+     * @param requestBuffer  Pointer to (or NULL) request data bytes.
+     * @param requestLength  Number of bytes in the request buffer.
+     * @param responseBuffer Buffer to store a single line of response, if NULL, no response is read.  Note that the response is NOT a null-terminated string, if you want that, do it yourself (and specify length-1).
+     * @param buffLength     Length of response buffer.
+     * 
      */
     
-    void sendCommand(byte command, uint8_t arg1, uint8_t arg2, char *responseBuffer, unsigned int bufferLength);
-
-    void sendCommandData(byte command, uint8_t *requestBuffer, uint8_t requestLength, uint8_t *responseBuffer, unsigned int bufferLength);
+    void sendCommandData(uint8_t command, uint8_t *requestBuffer, uint8_t requestLength, uint8_t *responseBuffer, uint8_t bufferLength);
     
-    // Just some different versions of that for ease of use
-    void sendCommand(byte command);    
-    void sendCommand(byte command, byte arg1);    
-    void sendCommand(byte command, byte arg1, byte arg2);
+    /** Send a command with no arguments and no response. 
+     * 
+     * @param command       Byte value of to send as from the datasheet.
+     */
     
-    /** Send a command to the JQ8400 module, and get a 16 bit response.
+    inline void sendCommand(uint8_t command, uint8_t *responseBuffer = 0, uint8_t bufferLength = 0) 
+    { 
+      sendCommandData(command, NULL,  0, responseBuffer, bufferLength);
+    }
+    
+    /** Send a command with a single 8 bit argument and no response. 
+     * 
+     * @param command       Byte value of to send as from the datasheet.
+     * @param arg           Single byte of data
+     */
+    
+    inline void sendCommand(uint8_t command, uint8_t arg, uint8_t *responseBuffer = 0, uint8_t bufferLength = 0)
+    { 
+      sendCommandData(command, &arg, 1, responseBuffer, bufferLength); 
+    }
+    
+    /** Send a command with a 16 bit integer argument.
+     *      * 
+     * @param command       Byte value of to send as from the datasheet.
+     */
+    
+    inline void sendCommand(uint8_t command, uint16_t arg, uint8_t *responseBuffer = 0, uint8_t bufferLength = 0) 
+    { 
+      #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__    
+        sendCommandData(command, ((uint8_t *)(&arg)), 2, responseBuffer, bufferLength);
+      #else
+        uint8_t buf[] = { *(((uint8_t *)(&arg))+1), *((uint8_t *)(&arg)) };
+        sendCommandData(command, buf, 2, responseBuffer, bufferLength);
+      #endif
+    }
+        
+    /** Send a command to the JQ8400 module, and get a 16 bit integer response.
      * 
      * @param command        Byte value of to send as from the datasheet.
      * @return Response from module.
@@ -572,7 +603,7 @@ class JQ8400_Serial : public SoftwareSerial
     
     unsigned int sendCommandWithUnsignedIntResponse(byte command);
 
-    /** Send a command to the JQ8400 module, and get an 8 bit response.
+    /** Send a command to the JQ8400 module, and get an 8 bit integer response.
      * 
      * @param command        Byte value of to send as from the datasheet.
      * @return Response from module.
@@ -626,7 +657,6 @@ class JQ8400_Serial : public SoftwareSerial
     uint8_t currentLoop   = 2;
     
     
-
     static const uint8_t MP3_CMD_BEGIN = 0xAA;
     
     static const uint8_t MP3_CMD_PLAY = 0x02;
