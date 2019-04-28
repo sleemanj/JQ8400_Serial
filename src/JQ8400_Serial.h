@@ -131,6 +131,17 @@ class JQ8400_Serial : public SoftwareSerial
     
     void stop();
     
+    /** Fast Forward by a number of seconds (default 5).
+     */
+    
+    void fastForward(uint16_t seconds = 5);
+    
+    
+    /** Rewind  by a number of seconds (default 5).
+     */
+    
+    void rewind(uint16_t seconds = 5);
+    
     /** Play the next file.
      */
     
@@ -587,6 +598,9 @@ class JQ8400_Serial : public SoftwareSerial
     static const uint8_t MP3_CMD_PLAY = 0x02;
     static const uint8_t MP3_CMD_PAUSE = 0x03;
     
+    static const uint8_t MP3_CMD_FFWD  = 0x23;
+    static const uint8_t MP3_CMD_RWND  = 0x22;
+        
     static const uint8_t MP3_CMD_STOP = 0x10; // Not sure, maybe 0x04?
     
     static const uint8_t MP3_CMD_NEXT = 0x06;

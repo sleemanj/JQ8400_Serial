@@ -91,6 +91,16 @@ void JQ8400_Serial::abLoopClear()
   this->sendCommand(MP3_CMD_AB_PLAY_STOP);
 }
 
+void JQ8400_Serial::fastForward(uint16_t seconds)
+{
+  this->sendCommand(MP3_CMD_FFWD, (seconds>>8)&0xFF, seconds&0xFF);
+}
+
+void JQ8400_Serial::rewind(uint16_t seconds)
+{
+  this->sendCommand(MP3_CMD_RWND, (seconds>>8)&0xFF, seconds&0xFF);
+}
+
 void  JQ8400_Serial::nextFolder()
 {
   this->sendCommand(MP3_CMD_NEXT_FOLDER);
@@ -372,6 +382,8 @@ void  JQ8400_Serial::reset()
       // These ones do
       switch(command)
       {        
+        case MP3_CMD_FFWD:
+        case MP3_CMD_RWND:
         case MP3_CMD_SEEK_IDX: args = 2; break;
         case MP3_CMD_INSERT_IDX:args = 2; break;
         case MP3_CMD_PLAY_IDX: args = 2; break;
