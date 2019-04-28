@@ -510,6 +510,40 @@ class JQ8400_Serial : public SoftwareSerial
     
     void           currentFileName(char *buffer, unsigned int bufferLength);    
         
+    /** Play a sequence of files, which must all exist in a folder called "ZH" and be named 00.mp3 through 99.mp3
+     * 
+     *  Don't ask me why the folder must be called "ZH", that's what the JQ8400 wants.
+     * 
+     * @param playList An array of the numbers of files in the "ZH" folder.
+     *   For example, if your ZH folder contains 01.mp3, 02.mp3 and 03.mp3 and you want 
+     *   to play them in the order 03.mp3, 01.mp3, 02.mp3 then your array should be
+     *   
+     *     uint8_t playList[] = { 3, 1, 2 };
+     * 
+     * @param listLength          Number of filenames in the list.
+     * 
+     */
+    
+    void playSequenceByFileNumber(uint8_t playList[], uint8_t listLength);
+    
+    /** Play a sequence of files, which must all exist in a folder called "ZH" and have 2 character names.
+     * 
+     *  Don't ask me why the folder must be called "ZH", that's what the JQ8400 wants.
+     * 
+     *  Example files: ZH/A1.mp3 , ZH/1B.mp3, ZH/AZ.mp3
+     * 
+     * @param playList An array of the two character names.
+     *   
+     *    const char * fileNames[] = { "DD", "CC", "BB", "AA" };
+     *    mp3.playSequenceByFileName(fileNames, sizeof(fileNames)/sizeof(char *));
+     * 
+     * @param listLength          Number of filenames in the list.
+     * 
+     */
+    
+    void playSequenceByFileName(const char *playList[], uint8_t listLength);
+    
+    
     
   protected:
     
@@ -644,6 +678,7 @@ class JQ8400_Serial : public SoftwareSerial
     static const uint8_t MP3_CMD_CURRENT_FILE_POS_STOP = 0x26; // This stops that
     static const uint8_t MP3_CMD_CURRENT_FILE_NAME = 0x1E;
     
+    static const uint8_t MP3_CMD_PLAYLIST = 0x1B;
 };
 
 #endif

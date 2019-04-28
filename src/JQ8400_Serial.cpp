@@ -175,6 +175,37 @@ void  JQ8400_Serial::playInFolderNumber(unsigned int folderNumber)
   this->sendCommandData(MP3_CMD_PLAY_FILE_FOLDER, (uint8_t*)buf, sizeof(buf)-1, 0, 0);
 }
 
+void JQ8400_Serial::playSequenceByFileNumber(uint8_t playList[], uint8_t listLength)
+{
+  char buf[listLength*2+1]; // itoa will need an extra null
+  
+  uint8_t i = 0;
+  for(uint8_t x = 0; x < listLength; x++)
+  {
+    if(playList[x]<10)
+    {
+      buf[i++] = '0';
+    }
+    itoa(playList[x], &buf[i++], 10);
+  }
+  
+  this->sendCommandData(MP3_CMD_PLAYLIST, (uint8_t *)buf, sizeof(buf)-1, 0, 0);
+}
+
+void JQ8400_Serial::playSequenceByFileName(const char * playList[], uint8_t listLength)
+{
+  char buf[listLength*2];
+  
+  uint8_t i = 0;
+  for(uint8_t x = 0; x < listLength; x++)
+  {
+    buf[i++] = playList[x][0];
+    buf[i++] = playList[x][1];
+  }
+  
+  this->sendCommandData(MP3_CMD_PLAYLIST, (uint8_t *)buf, sizeof(buf), 0, 0);
+}
+
 void  JQ8400_Serial::volumeUp()
 {
   if(currentVolume < 30) currentVolume++;
