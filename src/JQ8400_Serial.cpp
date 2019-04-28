@@ -38,17 +38,18 @@ void  JQ8400_Serial::play()
 
 void  JQ8400_Serial::restart()
 {
-  byte oldVolume = this->getVolume();  
-  this->setVolume(0);
-  this->next();
-  this->pause();
-  this->setVolume(oldVolume);
-  this->prev();
+  this->sendCommand(MP3_CMD_STOP); // Make sure really will restart
+  this->sendCommand(MP3_CMD_PLAY);
 }
 
 void  JQ8400_Serial::pause()
 {
   this->sendCommand(MP3_CMD_PAUSE);
+}
+
+void  JQ8400_Serial::stop()
+{
+  this->sendCommand(MP3_CMD_STOP);
 }
 
 void  JQ8400_Serial::next()
@@ -64,6 +65,11 @@ void  JQ8400_Serial::prev()
 void  JQ8400_Serial::playFileByIndexNumber(unsigned int fileNumber)
 {  
   this->sendCommand(MP3_CMD_PLAY_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
+}
+
+void  JQ8400_Serial::seekFileByIndexNumber(unsigned int fileNumber)
+{  
+  this->sendCommand(MP3_CMD_SEEK_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
 }
 
 void  JQ8400_Serial::nextFolder()
@@ -169,18 +175,44 @@ uint8_t JQ8400_Serial::getSource()
 
 void  JQ8400_Serial::sleep()
 {
+  // The datasheet defined two stop commands but has no sleep command
+  //
+  // I believe that the device automatically sleeps on stopping.
+  //
+  //  I have elected to make what looks more like "universal stop" 0x10
+  //  to be stop, and have defined for sake of convenience the other stop
+  //  command as "RESET", we will issue both to be sure
+    
   this->sendCommand(MP3_CMD_SLEEP);
+  this->sendCommand(MP3_CMD_STOP);
 }
 
 void  JQ8400_Serial::reset()
 {
+  // The datasheet defined two stop commands but has no reset command
+  //  I have elected to make what looks more like "universal stop" 0x10
+  //  to be stop, and have defined for sake of convenience the other stop
+  //  command as "RESET", we will issue both to be sure and then 
+  //  set things back to "defaults", in absense of an actual reset
+  this->sendCommand(MP3_CMD_STOP);
   this->sendCommand(MP3_CMD_RESET);
-  delay(500); // We need some time for the reset to happen
+  
+  // Reset to the startup defaults
+  this->setVolume(20);
+  this->setEqualizer(0);
+  this->setLoopMode(2);
+  this->seekFileByIndexNumber(1);
+  this->sendCommand(MP3_CMD_STOP);
 }
 
 
     byte  JQ8400_Serial::getStatus()    
     {
+      if(MP3_STATUS_CHECKS_IN_AGREEMENT <= 1)
+      {
+        return this->sendCommandWithByteResponse(MP3_CMD_STATUS); 
+      }
+      
       byte statTotal = 0;
       byte stat       = 0;
       do
@@ -188,7 +220,7 @@ void  JQ8400_Serial::reset()
         statTotal = 0;
         for(byte x = 0; x < MP3_STATUS_CHECKS_IN_AGREEMENT; x++)
         {
-          stat = this->sendCommandWithUnsignedIntResponse(MP3_CMD_STATUS);      
+          stat = this->sendCommandWithByteResponse(MP3_CMD_STATUS);      
           if(stat == 0) return 0; // STOP is fairly reliable
           statTotal += stat;
         }
@@ -267,6 +299,7 @@ void  JQ8400_Serial::reset()
       // These ones do
       switch(command)
       {        
+        case MP3_CMD_SEEK_IDX: args = 2; break;
         case MP3_CMD_PLAY_IDX: args = 2; break;
         case MP3_CMD_VOL_SET: args = 1; break;
         case MP3_CMD_EQ_SET: args = 1; break;        

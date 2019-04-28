@@ -36,7 +36,6 @@
 #define MP3_EQ_ROCK       2
 #define MP3_EQ_JAZZ       3
 #define MP3_EQ_CLASSIC    4
-#define MP3_EQ_BASS       5
 
 #define MP3_SRC_USB       0
 #define MP3_SRC_SDCARD    1
@@ -67,16 +66,9 @@
 #define MP3_STATUS_PLAYING 1
 #define MP3_STATUS_PAUSED  2
 
-// The response from a status query we get is  for some reason
-// a bit... iffy, most of the time it is reliable, but sometimes
-// instead of a playing (1) response, we get a paused (2) response
-// even though it is playing.  Stopped responses seem reliable.
-// So to work around this when getStatus() is called we actually
-// request the status this many times and only if one of them is STOPPED
-// or they are all in agreement that it is playing or paused then
-// we return that status.  If some of them differ, we do another set 
-// of tests etc...
-#define MP3_STATUS_CHECKS_IN_AGREEMENT 4
+// The response from a status query could be unreliable
+//  we can increase this to check multiple times.
+#define MP3_STATUS_CHECKS_IN_AGREEMENT 1
 
 #define MP3_DEBUG 1
 
@@ -116,20 +108,15 @@ class JQ8400_Serial : public SoftwareSerial
     
     JQ8400_Serial(short rxPin, short txPin) : SoftwareSerial(rxPin,txPin) { };
     
-    /** Start playing the current file.
+    /** Start playing the current file, if paused the playing is resumed.
+     * 
+     *  If stopped or playing the playing is started from beginning.
+     * 
      */
     
     void play();
     
-    /** Restart the current (possibly paused) track from the 
-     *  beginning.
-     *  
-     *  Note that this is not an actual command the JQ8400 knows
-     *  what we do is mute, advance to the next track, pause,
-     *  unmute, and go back to the previous track (which will
-     *  cause it to start playing.
-     * 
-     *  That said, it appears to work just fine.
+    /** Restart the current track from the beginning.
      * 
      */
     
@@ -140,6 +127,11 @@ class JQ8400_Serial : public SoftwareSerial
      */
     
     void pause();
+    
+    /** Stop the current playing (if any).
+     */
+    
+    void stop();
     
     /** Play the next file.
      */
@@ -161,28 +153,58 @@ class JQ8400_Serial : public SoftwareSerial
     
     void prevFolder();
     
-    /** Play a specific file based on it's (FAT table) index number.  Note that the index number
-     *  has nothing to do with the file name (except if you uploaded/copied them to the media in
-     *  order of file name).
+    /** Play a specific file based on it's (FAT table) index number.
+     * 
+     *  Note that the index number has nothing to do with the file name (except if you 
+     *  uploaded/copied them to the media in order of file name).
      * 
      *  To sort your SD Card FAT table, search for a FAT sorting utility for your operating system 
-     *  of choice.
+     *  of choice.  Specifically on Linux fatsort is the tool you want but be sure to get a recent
+     *  version which supports FAT-12 that the JQ8400 use for flash memory.
+     * 
+     *  https://sourceforge.net/projects/fatsort/
+     * 
+     *  @param fileNumber FAT Table index of the file to play next.
      */
     
     void playFileByIndexNumber(unsigned int fileNumber);        
     
     /** Play a specific file in a specific folder based on the name of those folder and file.
-     * 
-     * Only applies to SD Card.
-     * 
+     *
      * To use this function, folders must be named from 00 to 99, and the files in those folders
      * must be named from 000.mp3 to 999.mp3
      * 
-     * So to play the file on the SD Card "/03/006.mp3" use mp3.playFileNumberInFolderNumber(3, 6);
+     * So to play the file "/03/006.mp3" use mp3.playFileNumberInFolderNumber(3, 6);
+     * 
+     * Note that zero padding of your file names is required - "01/002.mp3" good, "1/2.mp3" bad.
      * 
      */
     
     void playFileNumberInFolderNumber(unsigned int folderNumber, unsigned int fileNumber);
+    
+    /** Seek to a specific file based on it's (FAT table) index number.  
+     * 
+     *  The file will not start playing until you issue `play()`
+     * 
+     *  Note that any currently playing file will stop immediately.
+     * 
+     *  It seems (undocumented) that seeking to a track will wake up the device's output
+     *   and keep it awake until you play or stop (or it stops after playing), you may wish
+     *   to issue a sleep() after seeking.
+     * 
+     *  Note that the index number has nothing to do with the file name (except if you 
+     *  uploaded/copied them to the media in order of file name).
+     * 
+     *  To sort your SD Card FAT table, search for a FAT sorting utility for your operating system 
+     *  of choice.  Specifically on Linux fatsort is the tool you want but be sure to get a recent
+     *  version which supports FAT-12 that the JQ8400 use for flash memory.
+     * 
+     *  https://sourceforge.net/projects/fatsort/
+     * 
+     *  @param fileNumber FAT Table index of the file to play next.
+     */
+    
+    void seekFileByIndexNumber(unsigned int fileNumber);
     
     /** Increase the volume by 1 (volume ranges 0 to 30). */
     
@@ -208,7 +230,6 @@ class JQ8400_Serial : public SoftwareSerial
      *  *  MP3_EQ_ROCK       
      *  *  MP3_EQ_JAZZ       
      *  *  MP3_EQ_CLASSIC    
-     *  *  MP3_EQ_BASS       
      * 
      */
     
@@ -265,10 +286,9 @@ class JQ8400_Serial : public SoftwareSerial
     }
     
     /** Put the device to sleep.
-     * 
-     *  Not recommanded if you are using SD Card as for some reason
-     *  it appears to cause the SD Card to not be recognised again
-     *  until the device is totally powered off and on again :-/
+     *
+     *  This will stop all playing.  When you play() again it will be 
+     *  from the beginning of the current track.
      * 
      */
     
@@ -277,8 +297,7 @@ class JQ8400_Serial : public SoftwareSerial
     /** Reset the device (softly).
      *       
      * It may be necessary in practice to actually power-cycle the device
-     * as sometimes it can get a bit confused, especially if changing
-     * SD Cards on-the-fly which really doesn't work too well.
+     * in case it gets confused or something.
      * 
      * So if designing a PCB/circuit including JQ8400 modules it might be 
      * worth while to include such ability (ie, power the device through 
@@ -303,6 +322,8 @@ class JQ8400_Serial : public SoftwareSerial
      */
     
     byte getStatus();
+    
+    uint8_t busy() { return getStatus() == MP3_STATUS_PLAYING; }
     
     /** Get the current volume level.
      * 
@@ -480,12 +501,13 @@ class JQ8400_Serial : public SoftwareSerial
     static const uint8_t MP3_CMD_PLAY = 0x02;
     static const uint8_t MP3_CMD_PAUSE = 0x03;
     
-    static const uint8_t MP3_CMD_STOP = 0x10;
+    static const uint8_t MP3_CMD_STOP = 0x10; // Not sure, maybe 0x04?
     
     
     static const uint8_t MP3_CMD_NEXT = 0x06;
     static const uint8_t MP3_CMD_PREV = 0x05;
     static const uint8_t MP3_CMD_PLAY_IDX = 0x07;
+    static const uint8_t MP3_CMD_SEEK_IDX = 0x1F;
     static const uint8_t MP3_CMD_INSERT_IDX = 0x16; // FIXME - Implement
     
     
@@ -502,8 +524,8 @@ class JQ8400_Serial : public SoftwareSerial
     static const uint8_t MP3_CMD_LOOP_SET = 0x18;    
     static const uint8_t MP3_CMD_SOURCE_SET = 0x0B;
     
-      static const uint8_t MP3_CMD_SLEEP = 0x04;    // FIXME - not right
-      static const uint8_t MP3_CMD_RESET = 0x04;    // FIXME - not right
+    static const uint8_t MP3_CMD_SLEEP = 0x04;    // I am not sure about these, see implmentation of sleep() and reset()
+    static const uint8_t MP3_CMD_RESET = 0x04;    //  what I have done seems to work maybe, maybe.
 
     static const uint8_t MP3_CMD_STATUS = 0x01;
     
