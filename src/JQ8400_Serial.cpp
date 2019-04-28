@@ -67,9 +67,28 @@ void  JQ8400_Serial::playFileByIndexNumber(unsigned int fileNumber)
   this->sendCommand(MP3_CMD_PLAY_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
 }
 
+void  JQ8400_Serial::interjectFileByIndexNumber(unsigned int fileNumber)
+{  
+  uint8_t buf[3] = { getSource(), (uint8_t)((fileNumber>>8)&0xFF), (uint8_t)(fileNumber & (byte)0xFF) };
+  this->sendCommandData(MP3_CMD_INSERT_IDX, buf, 3, 0, 0);
+  return;
+  this->sendCommand(MP3_CMD_INSERT_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
+}
+
 void  JQ8400_Serial::seekFileByIndexNumber(unsigned int fileNumber)
 {  
   this->sendCommand(MP3_CMD_SEEK_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
+}
+
+void JQ8400_Serial::abLoopPlay(uint16_t secondsStart, uint16_t secondsEnd)
+{
+  uint8_t buf[4] = { (uint8_t)(secondsStart / 60), (uint8_t)(secondsStart % 60), (uint8_t)(secondsEnd / 60), (uint8_t)(secondsEnd % 60) };
+  this->sendCommandData(MP3_CMD_AB_PLAY, buf, sizeof(buf), 0, 0);
+}
+
+void JQ8400_Serial::abLoopClear()
+{
+  this->sendCommand(MP3_CMD_AB_PLAY_STOP);
 }
 
 void  JQ8400_Serial::nextFolder()
@@ -122,6 +141,26 @@ void  JQ8400_Serial::playFileNumberInFolderNumber(unsigned int folderNumber, uns
   itoa(fileNumber, &buf[i], 10);
   
   buf[9] = '*'; // itoa clobbered this with it's null
+  
+  this->sendCommandData(MP3_CMD_PLAY_FILE_FOLDER, (uint8_t*)buf, sizeof(buf)-1, 0, 0);
+}
+
+void  JQ8400_Serial::playInFolderNumber(unsigned int folderNumber)
+{
+  char buf[] = " /42*/*???";
+  
+  buf[0] = this->getSource();
+  
+  uint8_t i = 2; // 1st digit folder component
+  if(folderNumber<10)
+  {
+    buf[i] = '0';
+    i++;
+  }
+  itoa(folderNumber,&buf[i], 10);
+  
+  i = 4;
+  buf[i] = '*'; // itoa clobbered this with it's null
   
   this->sendCommandData(MP3_CMD_PLAY_FILE_FOLDER, (uint8_t*)buf, sizeof(buf)-1, 0, 0);
 }
@@ -189,20 +228,38 @@ void  JQ8400_Serial::sleep()
 
 void  JQ8400_Serial::reset()
 {
-  // The datasheet defined two stop commands but has no reset command
-  //  I have elected to make what looks more like "universal stop" 0x10
-  //  to be stop, and have defined for sake of convenience the other stop
-  //  command as "RESET", we will issue both to be sure and then 
-  //  set things back to "defaults", in absense of an actual reset
-  this->sendCommand(MP3_CMD_STOP);
-  this->sendCommand(MP3_CMD_RESET);
-  
-  // Reset to the startup defaults
-  this->setVolume(20);
-  this->setEqualizer(0);
-  this->setLoopMode(2);
-  this->seekFileByIndexNumber(1);
-  this->sendCommand(MP3_CMD_STOP);
+  uint8_t retry = 5; // Try really hard to make ourselves heard.
+  do
+  {
+    // The datasheet defined two stop commands but has no reset command
+    //  I have elected to make what looks more like "universal stop" 0x10
+    //  to be stop, and have defined for sake of convenience the other stop
+    //  command as "RESET", we will issue both to be sure and then 
+    //  set things back to "defaults", in absense of an actual reset
+    
+    this->sendCommand(MP3_CMD_STOP);  delay(1); // There seems to be something
+    this->sendCommand(MP3_CMD_RESET); delay(1); //  related to timing here
+    
+    
+    // Reset to the startup defaults
+    this->setVolume(20);
+    this->setEqualizer(0);
+    this->setLoopMode(2);
+    this->seekFileByIndexNumber(1);
+    this->sendCommand(MP3_CMD_STOP);
+    
+    uint8_t timeout = 9;
+    while(timeout-- > 0 )
+    {
+      if(getAvailableSources())
+      {
+        retry = 0;
+        break; 
+      }
+      delay(1);
+    }
+  }
+  while(retry-- > 0);
 }
 
 
@@ -316,6 +373,7 @@ void  JQ8400_Serial::reset()
       switch(command)
       {        
         case MP3_CMD_SEEK_IDX: args = 2; break;
+        case MP3_CMD_INSERT_IDX:args = 2; break;
         case MP3_CMD_PLAY_IDX: args = 2; break;
         case MP3_CMD_VOL_SET: args = 1; break;
         case MP3_CMD_EQ_SET: args = 1; break;        

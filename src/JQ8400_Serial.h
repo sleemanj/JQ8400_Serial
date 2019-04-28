@@ -167,6 +167,26 @@ class JQ8400_Serial : public SoftwareSerial
     
     void playFileByIndexNumber(unsigned int fileNumber);        
     
+    /** Interject the currently playing file (if any) with the given index number file.
+     * 
+     *  Like a special announcement comes over, it interrupts the 
+     *   music playing, when the announcement finishes, the music continues.
+     * 
+     *  Note that the index number has nothing to do with the file name (except if you 
+     *  uploaded/copied them to the media in order of file name).
+     * 
+     *  To sort your SD Card FAT table, search for a FAT sorting utility for your operating system 
+     *  of choice.  Specifically on Linux fatsort is the tool you want but be sure to get a recent
+     *  version which supports FAT-12 that the JQ8400 use for flash memory.
+     * 
+     *  https://sourceforge.net/projects/fatsort/
+     * 
+     *  @param fileNumber FAT Table index of the file to play next.
+     */
+    
+    void interjectFileByIndexNumber(unsigned int fileNumber);        
+    
+    
     /** Play a specific file in a specific folder based on the name of those folder and file.
      *
      * To use this function, folders must be named from 00 to 99, and the files in those folders
@@ -174,11 +194,28 @@ class JQ8400_Serial : public SoftwareSerial
      * 
      * So to play the file "/03/006.mp3" use mp3.playFileNumberInFolderNumber(3, 6);
      * 
-     * Note that zero padding of your file names is required - "01/002.mp3" good, "1/2.mp3" bad.
+     * Note that zero padding of your folder and file names is required - "01/002.mp3" good, "1/2.mp3" bad.
      * 
+     * @param folderNumber 0 to 99
+     * @param fileNumber  0 to 999
      */
     
     void playFileNumberInFolderNumber(unsigned int folderNumber, unsigned int fileNumber);
+    
+    /** Play the first (?) file in a specific folder 00 to 99.
+     *
+     * To use this function, folders must be named from 00 to 99.
+     * 
+     * So to play the folder "/03" use mp3.playInFolderNumber(3);
+     * 
+     * Note that zero padding of your folder and file required - "01/002.mp3" good, "1/2.mp3" bad.
+     * 
+     * @param folderNumber 0 to 99
+     * 
+     */
+    
+    void playInFolderNumber(unsigned int folderNumber);
+    
     
     /** Seek to a specific file based on it's (FAT table) index number.  
      * 
@@ -203,6 +240,45 @@ class JQ8400_Serial : public SoftwareSerial
      */
     
     void seekFileByIndexNumber(unsigned int fileNumber);
+    
+    /** A-B Loop for the file currently playing.
+     * 
+     *  For the **track that is already playing (and not paused)** loop play between two marks defined by a start and end second.
+     * 
+     *  If you want to start a file in an ab loop, start it playing and immediately issue the abLoopPlay.
+     *  
+     *     mp3.playFileByIndexNumber(1);
+     *     mp3.abLoopPlay(25,50);
+     * 
+     *  will work, similarly if you want to resume from a pause into an ab loop
+     *  
+     *    mp3.play();
+     *    mp3.abLoopPlay(25,50);
+     * 
+     *  if you pause in an abLoop when you play again the abLoop is terminated.
+     * 
+     * There seems to be some sort of odd granularity with this function of the device, 
+     *   the first time through the ab-loop the start point is sometimes different
+     *   to subsequent loops through, perhaps a second "out", that is if you specify
+     *   start at 25 seconds, the first loop might start at 24, and subsequent ones at 
+     *   25 (or vice-versa).  In short, experimentation might be needed here.
+     * 
+     * @param secondsStart Second to set as start marker.
+     * @param secondsEmd Second to set as end marker.
+     * 
+     */
+    
+    void abLoopPlay(uint16_t secondsStart, uint16_t secondsEnd);
+    
+    /** Use this to break a currently running A-B loop.
+     * 
+     * Pause, stop, play will also break the A-B loop, this will do it 
+     *  without requiring any break the play will just continue through 
+     *  the previously set end marker without looping.
+     * 
+     */
+    
+    void abLoopClear();
     
     /** Increase the volume by 1 (volume ranges 0 to 30). */
     
@@ -517,9 +593,11 @@ class JQ8400_Serial : public SoftwareSerial
     static const uint8_t MP3_CMD_PREV = 0x05;
     static const uint8_t MP3_CMD_PLAY_IDX = 0x07;
     static const uint8_t MP3_CMD_SEEK_IDX = 0x1F;
-      static const uint8_t MP3_CMD_INSERT_IDX = 0x16; // FIXME - Implement
+    static const uint8_t MP3_CMD_INSERT_IDX = 0x16;
     
-    
+    static const uint8_t MP3_CMD_AB_PLAY      = 0x20;
+    static const uint8_t MP3_CMD_AB_PLAY_STOP = 0x21;
+        
     static const uint8_t MP3_CMD_NEXT_FOLDER = 0x0F;
     static const uint8_t MP3_CMD_PREV_FOLDER = 0x0E;
     
