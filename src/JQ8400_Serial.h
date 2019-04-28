@@ -290,6 +290,9 @@ class JQ8400_Serial : public SoftwareSerial
      *  This will stop all playing.  When you play() again it will be 
      *  from the beginning of the current track.
      * 
+     *  Note that the JQ8400 seems to automatically sleep when it 
+     *  stops playing **except** when you seek to a track (or pause).
+     * 
      */
     
     void sleep();
@@ -322,6 +325,13 @@ class JQ8400_Serial : public SoftwareSerial
      */
     
     byte getStatus();
+    
+    /** Return if the device is busy (playing) or not.
+     * 
+     *  Just a convenience test, equivalent to `getStatus() == MP3_STATUS_PLAYING`
+     * 
+     * @return bool
+     */
     
     uint8_t busy() { return getStatus() == MP3_STATUS_PLAYING; }
     
@@ -368,34 +378,6 @@ class JQ8400_Serial : public SoftwareSerial
     
     unsigned int   countFiles();    
     
-    /** Count the number of files on the specified media.
-     * 
-     *  Note: changes to the given source.
-     * 
-     * @param source One of MP3_SRC_BUILTIN and MP3_SRC_SDCARD
-     * @return Number of files present on that media.
-     * 
-     */
-    
-    unsigned int   countFiles(byte source) { setSource(source); return countFiles(); };
-    
-    /** Count the number of folders on the current media.
-     * 
-     * @return Number of folders present on that media.
-     */
-    
-    unsigned int   countFolders();    
-    
-    /** Count the number of folders on the specified media.
-     * 
-     * Note: Changes to the specified source
-     * 
-     * @param source One of MP3_SRC_BUILTIN and MP3_SRC_SDCARD
-     * @return Number of folders present on that media.
-     */
-    
-    unsigned int   countFolders(byte source) { setSource(source); return countFolders(); };
-    
     /** For the currently playing (or paused, or file that would be played 
      *  next if stopped) file, return the file's (FAT table) index number.
      * 
@@ -406,24 +388,13 @@ class JQ8400_Serial : public SoftwareSerial
     
     unsigned int   currentFileIndexNumber();
     
-    /** For the currently playing (or paused, or file that would be played 
-     *  next if stopped) file, return the file's (FAT table) index number.
-     * 
-     *  This number can be used with playFileByIndexNumber();
-     * 
-     *  @deprecated Use `currentFileIndexNumber()` instead with no parameters.
-     *  @param  source One of MP3_SRC_BUILTIN and MP3_SRC_SDCARD, this parameter is ignored.
-     *  @return Number of file.
-     */
-    
-    unsigned int   currentFileIndexNumber(byte source __attribute__((unused)) ) { return currentFileIndexNumber(); }
- 
     /** For the currently playing or paused file, return the 
      *  current position in seconds.
      * 
      * @return Number of seconds into the file currently played.
      * 
      */
+    
     unsigned int   currentFilePositionInSeconds();
     
     /** For the currently playing or paused file, return the 
@@ -434,17 +405,14 @@ class JQ8400_Serial : public SoftwareSerial
     
     unsigned int   currentFileLengthInSeconds();
     
-    /** Get the name of the "current" file on the SD Card.
-     *  
+    /** Get the name of the "current" file.
+     *
+     * The name returned is shortened significantly to 8+3 format without
+     * a dot, all caps... in other words, this isn't very useful probably.
+     * 
      * The current file is the one that is playing, paused, or if stopped then
      * could be next to play or last played, uncertain.
-     * 
-     * It would be best to only consult this when playing or paused
-     * and you know that the SD Card is the active source.
-     * 
-     * Unfortunately there is no way to query the device to find out
-     * which media is the active source (at least not that I know of).
-     * 
+     *
      */
     
     void           currentFileName(char *buffer, unsigned int bufferLength);    
@@ -546,17 +514,16 @@ class JQ8400_Serial : public SoftwareSerial
     static const uint8_t MP3_CMD_COUNT_FILES     = 0x0C; // FIXME - No Difference for 8400?
     static const uint8_t MP3_CMD_COUNT_IN_FOLDER = 0x12; // FIXME - Implement
     
-    static const uint8_t MP3_CMD_COUNT_FOLDERS        = 0x53;    
+    // static const uint8_t MP3_CMD_COUNT_FOLDERS        = 0x53;    // Not supported by JQ8400?
     // static const uint8_t MP3_CMD_CURRENT_FILE_IDX_SD  = 0x0D;
     // static const uint8_t MP3_CMD_CURRENT_FILE_IDX_MEM = 0x0D; 
     static const uint8_t MP3_CMD_CURRENT_FILE_IDX         = 0x0D; // FIXME - No Difference for 8400?   
     static const uint8_t MP3_CMD_FIRST_FILE_IN_FOLDER_IDX = 0x11; // FIXME - Implement
     
     
-    
-    // static const uint8_t MP3_CMD_CURRENT_FILE_POS_SEC = 0x50;
-    // static const uint8_t MP3_CMD_CURRENT_FILE_LEN_SEC = 0x51;
     static const uint8_t MP3_CMD_CURRENT_FILE_LEN = 0x24;
+    static const uint8_t MP3_CMD_CURRENT_FILE_POS = 0x25; // This turns on continuous reporting of position
+    static const uint8_t MP3_CMD_CURRENT_FILE_POS_STOP = 0x26; // This stops that
     static const uint8_t MP3_CMD_CURRENT_FILE_NAME = 0x1E;
     
     

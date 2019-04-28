@@ -230,9 +230,9 @@ void  JQ8400_Serial::reset()
       return statTotal / MP3_STATUS_CHECKS_IN_AGREEMENT;      
     }
     
-    byte  JQ8400_Serial::getVolume()    { return currentVolume; } //this->sendCommandWithUnsignedIntResponse(MP3_CMD_VOL_GET); }
-    byte  JQ8400_Serial::getEqualizer() { return currentEq; } // this->sendCommandWithUnsignedIntResponse(MP3_CMD_EQ_GET); }
-    byte  JQ8400_Serial::getLoopMode()  { return currentLoop; } // this->sendCommandWithUnsignedIntResponse(MP3_CMD_LOOP_GET); }
+    byte  JQ8400_Serial::getVolume()    { return currentVolume; }
+    byte  JQ8400_Serial::getEqualizer() { return currentEq;     }
+    byte  JQ8400_Serial::getLoopMode()  { return currentLoop;   }
     
     
     unsigned int  JQ8400_Serial::countFiles()   
@@ -240,23 +240,39 @@ void  JQ8400_Serial::reset()
       return this->sendCommandWithUnsignedIntResponse(MP3_CMD_COUNT_FILES); 
     }
     
-    unsigned int  JQ8400_Serial::countFolders() 
-    {
-      return this->sendCommandWithUnsignedIntResponse(MP3_CMD_COUNT_FOLDERS); 
-    }
-    
     unsigned int  JQ8400_Serial::currentFileIndexNumber()
     {
       return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_IDX); 
     }
     
-    unsigned int  JQ8400_Serial::currentFilePositionInSeconds() { return 0; /* FIXME return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_POS_SEC); */ }
+    unsigned int  JQ8400_Serial::currentFilePositionInSeconds() 
+    {
+      uint8_t buf[3];
+      
+      // This turns on continuous position reporting, every second
+      this->sendCommandData(MP3_CMD_CURRENT_FILE_POS, 0, 0, buf, 3);
+      
+      // Stop it doing that
+      this->sendCommand(MP3_CMD_CURRENT_FILE_POS_STOP);
+      
+      return (buf[0]*60*60) + (buf[1]*60) + buf[2];
+    }
     
-    unsigned int  JQ8400_Serial::currentFileLengthInSeconds()   { return 0; /* FIXME this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_LEN_SEC); */ }
+    unsigned int  JQ8400_Serial::currentFileLengthInSeconds()   
+    {
+      uint8_t buf[3];
+      
+      this->sendCommandData(MP3_CMD_CURRENT_FILE_LEN, 0, 0, buf, 3);
+      
+      return (buf[0]*60*60) + (buf[1]*60) + buf[2];
+      
+      return 0; /* FIXME this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_LEN_SEC); */ 
+    }
     
     void          JQ8400_Serial::currentFileName(char *buffer, unsigned int bufferLength) 
     {
       this->sendCommand(MP3_CMD_CURRENT_FILE_NAME, 0, 0, buffer, bufferLength);
+      buffer[bufferLength-1] = 0; // Ensure null termination since this is a string.
     }
     
     // Used for the status commands, they mostly return an 8 to 16 bit integer 
