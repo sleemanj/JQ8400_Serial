@@ -66,7 +66,7 @@
 //  we can increase this to check multiple times.
 #define MP3_STATUS_CHECKS_IN_AGREEMENT 1
 
-#define MP3_DEBUG 1
+#define MP3_DEBUG 0
 
 #define HEX_PRINT(a) if(a < 16) Serial.print(0); Serial.print(a, HEX);
 
