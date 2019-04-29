@@ -101,11 +101,7 @@ $(document).ready(function(){initNavTree('index.html','');});
 <div class="title">JQ6500 MP3 Player Arduino Library Documentation</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><em>warning</em> This is a work in progress still, examples need to be rewritten, docs regenerated, and this readme isn't correct yet either :-)</p>
-<h1><a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> </h1>
-<p>Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-SD) Mp3 Player Modules</p>
-<p>For complete documentation about the JQ8400 Mp3 Player Module, see: <a href="http://sparks.gogo.co.nz/jq8400/index.html">http://sparks.gogo.co.nz/jq8400/index.html</a></p>
-<p>For a library methods reference see: <a href="class_j_q8400___serial.html</a></p>
+<div class="textblock"><p>Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-TF) Mp3 Player Modules</p>
 <p><b>Table of Contents</b></p>
 <ul>
 <li><a href="#jq8400_serial">JQ8400_Serial</a><ul>
@@ -131,6 +127,18 @@ $(document).ready(function(){initNavTree('index.html','');});
 </ul>
 </li>
 </ul>
+<table class="doxtable">
+<tr>
+<th>JQ8400-TF </th><th>JQ8400-FL  </th></tr>
+<tr>
+<td><div class="image">
+<img src="https://sparks.gogo.co.nz/assets/_site_/images/jq8400/P1090887.jpg" />
+</div>
+ </td><td><div class="image">
+<img src="http://sparks.gogo.co.nz/assets/_site_/images/jq8400/P1090886.jpg" />
+</div>
+ </td></tr>
+</table>
 <h2>Download, Install and Example </h2>
 <ul>
 <li>Download: <a href="http://sparks.gogo.co.nz/JQ8400_Serial.zip">http://sparks.gogo.co.nz/JQ8400_Serial.zip</a></li>
@@ -247,11 +255,19 @@ void loop()
   mp3.next();
   while(mp3.busy()); // Wait until finished.
 }
-</pre><h2>Power Demands </h2>
-<p>If using the on-board speaker driver, then naturally the power demands are significant, and your USB power may not be sufficient at more 1/3rd level of volume or so, the symptom is the audo breaking up and potentially resetting when volume increases.</p>
-<p>You should use either an external power source, an external amp, or a lower volume if you experience this problem.</p>
-<h2>Usage </h2>
-<p>Open the HelloWorld example.</p>
+</pre><h2>Troubleshooting </h2>
+<p>People have problems in about this order...</p>
+<ol type="1">
+<li>Incorrectly wired, make sure that TX/RX crossover and that you have GND shared</li>
+<li>Insufficient power supply. The power demands are not insignificant, USB from a computer... likely not good enough. Use external power.</li>
+<li>Trying to upload to JQ8400 while it is still connected to the Arduino. Best to unplug the JQ8400 from your project and just have it plugged into a USB cable when you want to change the files on it.</li>
+<li>MP3 file problem. Try re-encoding your MP3 files.</li>
+</ol>
+<h2>Further Documentation and Library Reference </h2>
+<ul>
+<li><a href="http://sparks.gogo.co.nz/jq8400/index.html">Complete Documentation about the JQ8400 Mp3 Player Module For Arduino</a></li>
+<li><a href="class_j_q8400___serial.html">JQ8400_Serial Library Methods Reference</a> (with thanks to githack.com)</li>
+</ul>
 <h2>JQ6500 to JQ8400 Breaking Changes </h2>
 <p>This section is for users of previous JQ6500 devices and the JQ6500_Serial library who are transitioning to a JQ8400 with <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> library.</p>
 <p>As much as possible the <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> library should follow the same "api", with some additions, however there are some "breaking changes" you should be aware of...</p>
@@ -278,7 +294,7 @@ void loop()
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Apr 29 2019 16:55:22 for JQ6500 MP3 Player Arduino Library by
+    <li class="footer">Generated on Mon Apr 29 2019 22:05:09 for JQ6500 MP3 Player Arduino Library by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
