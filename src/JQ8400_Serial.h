@@ -73,7 +73,7 @@
 class JQ8400_Serial
 {
   protected: 
-     Stream *_Serial;
+     Stream *_Serial; ///< Set in the constructor, the stream (eg HardwareSerial or SoftwareSerial object) that connects us to the device.
     
   public: 
 
@@ -83,41 +83,41 @@ class JQ8400_Serial
      * Example for software serial...
      * --------------------------------------------------------------------------------
      * 
-     *  #include <SoftwareSerial.h>
-     *  SoftwareSerial  mySerial(8,9);
-     * 
-     *  #include <JQ8400_Serial.h>
-     *  JQ8400_Serial   mp3(mySerial);
-     *  
-     *  void setup()
-     *  {
-     *    mySerial.begin(9600);
-     *    mp3.reset();
-     *  }
+     *     #include <SoftwareSerial.h>
+     *     SoftwareSerial  mySerial(8,9);
+     *     
+     *     #include <JQ8400_Serial.h>
+     *     JQ8400_Serial   mp3(mySerial);
+     *     
+     *     void setup()
+     *     {
+     *       mySerial.begin(9600);
+     *       mp3.reset();
+     *     }
      * 
      * Example over microcontroller's default hardware serial port...
      * --------------------------------------------------------------------------------
      * 
-     *  #include <JQ8400_Serial.h>
-     *  JQ8400_Serial   mp3;
-     *  
-     *  void setup()
-     *  {
-     *    Serial.begin(9600);
-     *    mp3.begin(Serial);
-     *  }
+     *     #include <JQ8400_Serial.h>
+     *     JQ8400_Serial   mp3(Serial);
+     *     
+     *     void setup()
+     *     {
+     *       Serial.begin(9600);
+     *       mp3.reset();
+     *     }
      * 
      * Example over microcontroller's other hardware serial port...
      * --------------------------------------------------------------------------------
      * 
-     *  #include <JQ8400_Serial.h>
-     *  JQ8400_Serial   mp3;
-     *  
-     *  void setup()
-     *  {
-     *    Serial2.begin(9600);
-     *    mp3.begin(Serial2);
-     *  }
+     *     #include <JQ8400_Serial.h>
+     *     JQ8400_Serial   mp3(Serial2);
+     *     
+     *     void setup()
+     *     {
+     *       Serial2.begin(9600);
+     *       mp3.reset();
+     *     }
      *
      * Example wiring for a 5v Arduino with SoftwareSerial on Pins 8 (RX) and 9 (TX):
      * -----------------
@@ -134,7 +134,7 @@ class JQ8400_Serial
      * -----------------
      *  * TX on JQ8400 connects to GPIO16 (Serial2 RX) on the ESP32
      *  * RX on JQ8400 connects to GPIO17 (Serial2 TX) on the ESP32
-     *      * 
+     *
      * Of course, power and ground are also required, VCC on JQ8400 is 5v tolerant (but RX isn't totally, hence the resistor above).  *
      * 
      * The TX voltage from the JQ8400 is 3.3v, you do not need to level-shift this 
@@ -200,37 +200,49 @@ class JQ8400_Serial
     
     void prevFolder();
     
-    /** Play a specific file based on it's (FAT table) index number.
+    /** Play a specific file based on it's FAT index number.
+     * 
+     *  **About The FAT Index Number**
      * 
      *  Note that the index number has nothing to do with the file name (except if you 
      *  uploaded/copied them to the media in order of file name).
      * 
-     *  To sort your SD Card FAT table, search for a FAT sorting utility for your operating system 
-     *  of choice.  Specifically on Linux fatsort is the tool you want but be sure to get a recent
-     *  version which supports FAT-12 that the JQ8400 use for flash memory.
+     *  It is the index of the file in the drive's File Allocation Table (FAT), loosely
+     *  this is usually the order in which you copied the files across, but due to operating
+     *  systems that's not entirely assured.
      * 
-     *  https://sourceforge.net/projects/fatsort/
+     *  To sort the FAT (after copying files), or view the FAT order, search for a FAT 
+     *  sorting utility for your operating system.
      * 
-     *  @param fileNumber FAT Table index of the file to play next.
+     *  Specifically on Linux [fatsort](https://sourceforge.net/projects/fatsort/) is the tool 
+     *  you want, but be sure to get a recent version which supports FAT-12, older ones do not.
+     * 
+     *  @param fileNumber FAT index of the file to play next.
      */
     
     void playFileByIndexNumber(uint16_t fileNumber);        
     
-    /** Interject the currently playing file (if any) with the given index number file.
+    /** Interject the currently playing file (if any) with the given FAT index number file.
      * 
      *  Like a special announcement comes over, it interrupts the 
      *   music playing, when the announcement finishes, the music continues.
      * 
+     *  **About The FAT Index Number**
+     * 
      *  Note that the index number has nothing to do with the file name (except if you 
      *  uploaded/copied them to the media in order of file name).
      * 
-     *  To sort your SD Card FAT table, search for a FAT sorting utility for your operating system 
-     *  of choice.  Specifically on Linux fatsort is the tool you want but be sure to get a recent
-     *  version which supports FAT-12 that the JQ8400 use for flash memory.
+     *  It is the index of the file in the drive's File Allocation Table (FAT), loosely
+     *  this is usually the order in which you copied the files across, but due to operating
+     *  systems that's not entirely assured.
      * 
-     *  https://sourceforge.net/projects/fatsort/
+     *  To sort the FAT (after copying files), or view the FAT order, search for a FAT 
+     *  sorting utility for your operating system.
      * 
-     *  @param fileNumber FAT Table index of the file to play next.
+     *  Specifically on Linux [fatsort](https://sourceforge.net/projects/fatsort/) is the tool 
+     *  you want, but be sure to get a recent version which supports FAT-12, older ones do not.
+     * 
+     *  @param fileNumber FAT index of the file to interject.
      */
     
     void interjectFileByIndexNumber(uint16_t fileNumber);        
@@ -241,7 +253,15 @@ class JQ8400_Serial
      * To use this function, folders must be named from 00 to 99, and the files in those folders
      * must be named from 000.mp3 to 999.mp3
      * 
-     * So to play the file "/03/006.mp3" use mp3.playFileNumberInFolderNumber(3, 6);
+     * **Example**
+     * 
+     * The device contains the file...
+     * 
+     *     /03/006.mp3
+     * 
+     * then the following code will play that file...
+     * 
+     *     mp3.playFileNumberInFolderNumber(3, 6);
      * 
      * Note that zero padding of your folder and file names is required - "01/002.mp3" good, "1/2.mp3" bad.
      * 
@@ -255,7 +275,7 @@ class JQ8400_Serial
      *
      * To use this function, folders must be named from 00 to 99.
      * 
-     * So to play the folder "/03" use mp3.playInFolderNumber(3);
+     * So to play the folder "/03" use `mp3.playInFolderNumber(3);`
      * 
      * Note that zero padding of your folder and file required - "01/002.mp3" good, "1/2.mp3" bad.
      * 
@@ -266,7 +286,7 @@ class JQ8400_Serial
     void playInFolderNumber(uint16_t folderNumber);
     
     
-    /** Seek to a specific file based on it's (FAT table) index number.  
+    /** Seek to a specific file based on it's FAT index number.  
      * 
      *  The file will not start playing until you issue `play()`
      * 
@@ -276,16 +296,22 @@ class JQ8400_Serial
      *   and keep it awake until you play or stop (or it stops after playing), you may wish
      *   to issue a sleep() after seeking.
      * 
+     *  **About The FAT Index Number**
+     * 
      *  Note that the index number has nothing to do with the file name (except if you 
      *  uploaded/copied them to the media in order of file name).
      * 
-     *  To sort your SD Card FAT table, search for a FAT sorting utility for your operating system 
-     *  of choice.  Specifically on Linux fatsort is the tool you want but be sure to get a recent
-     *  version which supports FAT-12 that the JQ8400 use for flash memory.
+     *  It is the index of the file in the drive's File Allocation Table (FAT), loosely
+     *  this is usually the order in which you copied the files across, but due to operating
+     *  systems that's not entirely assured.
      * 
-     *  https://sourceforge.net/projects/fatsort/
+     *  To sort the FAT (after copying files), or view the FAT order, search for a FAT 
+     *  sorting utility for your operating system.
      * 
-     *  @param fileNumber FAT Table index of the file to play next.
+     *  Specifically on Linux [fatsort](https://sourceforge.net/projects/fatsort/) is the tool 
+     *  you want, but be sure to get a recent version which supports FAT-12, older ones do not.
+     * 
+     *  @param fileNumber FAT index of the file to play next.
      */
     
     void seekFileByIndexNumber(uint16_t fileNumber);
@@ -296,13 +322,13 @@ class JQ8400_Serial
      * 
      *  If you want to start a file in an ab loop, start it playing and immediately issue the abLoopPlay.
      *  
-     *     mp3.playFileByIndexNumber(1);
-     *     mp3.abLoopPlay(25,50);
+     *      mp3.playFileByIndexNumber(1);
+     *      mp3.abLoopPlay(25,50);
      * 
      *  will work, similarly if you want to resume from a pause into an ab loop
      *  
-     *    mp3.play();
-     *    mp3.abLoopPlay(25,50);
+     *     mp3.play();
+     *     mp3.abLoopPlay(25,50);
      * 
      *  if you pause in an abLoop when you play again the abLoop is terminated.
      * 
@@ -313,7 +339,7 @@ class JQ8400_Serial
      *   25 (or vice-versa).  In short, experimentation might be needed here.
      * 
      * @param secondsStart Second to set as start marker.
-     * @param secondsEmd Second to set as end marker.
+     * @param secondsEnd Second to set as end marker.
      * 
      */
     
@@ -510,11 +536,26 @@ class JQ8400_Serial
     uint16_t   countFiles();    
     
     /** For the currently playing (or paused, or file that would be played 
-     *  next if stopped) file, return the file's (FAT table) index number.
+     *  next if stopped) file, return the file's FAT index number.
      * 
      *  This number can be used with playFileByIndexNumber();
      * 
-     *  @return Number of file.
+     *  **About The FAT Index Number**
+     * 
+     *  Note that the index number has nothing to do with the file name (except if you 
+     *  uploaded/copied them to the media in order of file name).
+     * 
+     *  It is the index of the file in the drive's File Allocation Table (FAT), loosely
+     *  this is usually the order in which you copied the files across, but due to operating
+     *  systems that's not entirely assured.
+     * 
+     *  To sort the FAT (after copying files), or view the FAT order, search for a FAT 
+     *  sorting utility for your operating system.
+     * 
+     *  Specifically on Linux [fatsort](https://sourceforge.net/projects/fatsort/) is the tool 
+     *  you want, but be sure to get a recent version which supports FAT-12, older ones do not.
+     * 
+     *  @return FAT index number of file.
      */
     
     uint16_t   currentFileIndexNumber();
@@ -545,7 +586,7 @@ class JQ8400_Serial
      * The current file is the one that is playing, paused, or if stopped then
      * could be next to play or last played, uncertain.
      * 
-     * Example:
+     * **Example**
      * 
      *     char buf[12];
      *     mp3.currentFileName(buf, sizeof(buf));
@@ -560,14 +601,24 @@ class JQ8400_Serial
         
     /** Play a sequence of files, which must all exist in a folder called "ZH" and be named 00.mp3 through 99.mp3
      * 
-     *  Don't ask me why the folder must be called "ZH", that's what the JQ8400 wants.
+     * Don't ask me why the folder must be called "ZH", that's what the JQ8400 wants.
+     * 
+     * **Example**
+     * 
+     * Given that the JQ8400 contains the files...
+     * 
+     *     /ZH/01.mp3
+     *     /ZH/02.mp3
+     *     /ZH/03.mp3
+     * 
+     * then the following code will play them in the order 03.mp3, 01.mp3, 02.mp3
+     *  
+     *     uint8_t playList[] = { 3, 1, 2 };
+     *     mp3.playSequenceByFileNumber(playList, sizeof(playList));
+     * 
+     * pay attention that the file names are 2 digits, "`1.mp3`" is not valid.
      * 
      * @param playList An array of the numbers of files in the "ZH" folder.
-     *   For example, if your ZH folder contains 01.mp3, 02.mp3 and 03.mp3 and you want 
-     *   to play them in the order 03.mp3, 01.mp3, 02.mp3 then your array should be
-     *   
-     *     uint8_t playList[] = { 3, 1, 2 };
-     * 
      * @param listLength          Number of filenames in the list.
      * 
      */
@@ -578,14 +629,21 @@ class JQ8400_Serial
      * 
      *  Don't ask me why the folder must be called "ZH", that's what the JQ8400 wants.
      * 
-     *  Example files: ZH/A1.mp3 , ZH/1B.mp3, ZH/AZ.mp3
+     * **Example**
      * 
-     * @param playList An array of the two character names.
-     *   
-     *    const char * fileNames[] = { "DD", "CC", "BB", "AA" };
-     *    mp3.playSequenceByFileName(fileNames, sizeof(fileNames)/sizeof(char *));
+     * Given that the JQ8400 contains the files...
      * 
-     * @param listLength          Number of filenames in the list.
+     *     /ZH/A1.mp3
+     *     /ZH/1B.mp3
+     *     /ZH/AZ.mp3
+     * 
+     * then the following code will play them in the order 1B.mp3, A1.mp3, AZ.mp3
+     *  
+     *     const char * playList[] = { "1B", "A1", "AZ" };
+     *     mp3.playSequenceByFileName(playList, sizeof(playList)/sizeof(char *));
+     * 
+     * @param playList   An array of the two character names (as strings).
+     * @param listLength Number of filenames in the list.
      * 
      */
     
@@ -680,17 +738,15 @@ class JQ8400_Serial
     
     int    waitUntilAvailable(uint16_t maxWaitTime = 1000);
     
+        
+    uint8_t currentVolume = 20; ///< Record of current volume level (JQ8400 has no way to query)
+    uint8_t currentEq     = 0;  ///< Record of current equalizer (JQ8400 has no way to query)
+    uint8_t currentLoop   = 2;  ///< Record of current loop mode (JQ8400 has no way to query)
     
-    /** 
-     * The JQ8400 does not have commands to query the volume, eq or playing mode
-     *   so we have to keep track of that ourselves unfortunately.
+    /** @name Command Byte Definitions
+     *
      */
-    
-    uint8_t currentVolume = 20;
-    uint8_t currentEq     = 0;
-    uint8_t currentLoop   = 2;
-    
-    
+    ///@{
     static const uint8_t MP3_CMD_BEGIN = 0xAA;
     
     static const uint8_t MP3_CMD_PLAY = 0x02;
@@ -713,7 +769,7 @@ class JQ8400_Serial
     static const uint8_t MP3_CMD_NEXT_FOLDER = 0x0F;
     static const uint8_t MP3_CMD_PREV_FOLDER = 0x0E;
     
-      static const uint8_t MP3_CMD_PLAY_FILE_FOLDER = 0x08; // FIXME
+    static const uint8_t MP3_CMD_PLAY_FILE_FOLDER = 0x08;
     
     static const uint8_t MP3_CMD_VOL_UP = 0x14;
     static const uint8_t MP3_CMD_VOL_DN = 0x15;
@@ -743,6 +799,7 @@ class JQ8400_Serial
     static const uint8_t MP3_CMD_CURRENT_FILE_NAME = 0x1E;
     
     static const uint8_t MP3_CMD_PLAYLIST = 0x1B;
+    ///@}
 };
 
 #endif
