@@ -9,7 +9,7 @@ For complete documentation about the JQ8400 Mp3 Player Module, see:
    http://sparks.gogo.co.nz/jq8400/index.html
    
 For a library methods reference see:
-   https://rawcdn.githack.com/sleemanj/JQ8400_Serial/48d9a2ea1c10bec7a9bf69f397898daec2b4101c/docs/html/class_j_q8400___serial.html
+   https://rawcdn.githack.com/sleemanj/JQ8400_Serial/9c5b402/docs/html/class_j_q8400___serial.html
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
