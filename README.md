@@ -1,15 +1,7 @@
-*warning* This is a work in progress still, examples need to be rewritten, docs regenerated, and this readme isn't correct yet either :-)
-
 JQ8400_Serial
 =======================
 
-Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-SD) Mp3 Player Modules
-
-For complete documentation about the JQ8400 Mp3 Player Module, see: 
-   http://sparks.gogo.co.nz/jq8400/index.html
-   
-For a library methods reference see:
-   https://rawcdn.githack.com/sleemanj/JQ8400_Serial/9c5b402/docs/html/class_j_q8400___serial.html
+Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-TF) Mp3 Player Modules
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -32,7 +24,10 @@ For a library methods reference see:
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-   
+| JQ8400-TF | JQ8400-FL |
+| --------- | --------- |
+| <img src="https://sparks.gogo.co.nz/assets/_site_/images/jq8400/P1090887.jpg" /> | <img src="http://sparks.gogo.co.nz/assets/_site_/images/jq8400/P1090886.jpg" />|
+
 Download, Install and Example
 -----------------------------
 
@@ -147,22 +142,21 @@ This is a typical setup where your Arduino environment has more than one "Serial
     }
 
 
-Power Demands
---------------------------
+Troubleshooting
+-----------------------------
 
-If using the on-board speaker driver, then naturally the power
-demands are significant, and your USB power may not be sufficient
-at more 1/3rd level of volume or so, the symptom is the audo 
-breaking up and potentially resetting when volume increases.
+People have problems in about this order...
 
-You should use either an external power source, an external amp, or a lower
-volume if you experience this problem.
+  1. Incorrectly wired, make sure that TX/RX crossover and that you have GND shared
+  2. Insufficient power supply.  The power demands are not insignificant, USB from a computer... likely not good enough.  Use external power.
+  3. Trying to upload to JQ8400 while it is still connected to the Arduino.  Best to unplug the JQ8400 from your project and just have it plugged into a USB cable when you want to change the files on it.
+  4. MP3 file problem.  Try re-encoding your MP3 files.
+  
+Further Documentation and Library Reference
+-----------------------------
 
-Usage
---------------------------
-
-Open the HelloWorld example.
-
+  * [Complete Documentation about the JQ8400 Mp3 Player Module For Arduino](http://sparks.gogo.co.nz/jq8400/index.html)
+  * [JQ8400_Serial Library Methods Reference](https://rawcdn.githack.com/sleemanj/JQ8400_Serial/9c5b402/docs/html/class_j_q8400___serial.html) (with thanks to githack.com)
 
 JQ6500 to JQ8400 Breaking Changes
 --------------------------
