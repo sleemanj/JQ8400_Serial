@@ -7,20 +7,19 @@ Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-TF) Mp3 
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
-- [JQ8400_Serial](#jq8400_serial)
-  - [Download, Install and Example](#download-install-and-example)
-  - [Connecting To Your Arduino](#connecting-to-your-arduino)
-    - [For a SoftwareSerial Connection](#for-a-softwareserial-connection)
-      - [SoftwareSerial **5v** Arduino, connect as follows.](#softwareserial-5v-arduino-connect-as-follows)
-      - [SoftwareSerial **3v3** Arduino, connect as follows...](#softwareserial-3v3-arduino-connect-as-follows)
-    - [For a built in additional hardware serial connection (eg ESP32)](#for-a-built-in-additional-hardware-serial-connection-eg-esp32)
-      - [Built In Additional Serial on **5v** Arduino, connect as follows.](#built-in-additional-serial-on-5v-arduino-connect-as-follows)
-      - [Built In Additional Serial on **3v3** Arduino, connect as follows.](#built-in-additional-serial-on-3v3-arduino-connect-as-follows)
-      - [Example for ESP32 using Built In Serial2](#example-for-esp32-using-built-in-serial2)
-      - [Example Code For "Serial2"](#example-code-for-serial2)
-  - [Power Demands](#power-demands)
-  - [Usage](#usage)
-  - [JQ6500 to JQ8400 Breaking Changes](#jq6500-to-jq8400-breaking-changes)
+- [Download, Install and Example](#download-install-and-example)
+- [Connecting To Your Arduino](#connecting-to-your-arduino)
+  - [For a SoftwareSerial Connection](#for-a-softwareserial-connection)
+    - [SoftwareSerial **5v** Arduino, connect as follows.](#softwareserial-5v-arduino-connect-as-follows)
+    - [SoftwareSerial **3v3** Arduino, connect as follows...](#softwareserial-3v3-arduino-connect-as-follows)
+  - [For a built in additional hardware serial connection (eg ESP32)](#for-a-built-in-additional-hardware-serial-connection-eg-esp32)
+    - [Built In Additional Serial on **5v** Arduino, connect as follows.](#built-in-additional-serial-on-5v-arduino-connect-as-follows)
+    - [Built In Additional Serial on **3v3** Arduino, connect as follows.](#built-in-additional-serial-on-3v3-arduino-connect-as-follows)
+    - [Example for ESP32 using Built In Serial2](#example-for-esp32-using-built-in-serial2)
+    - [Example Code For "Serial2"](#example-code-for-serial2)
+- [Troubleshooting](#troubleshooting)
+- [Further Documentation and Library Reference](#further-documentation-and-library-reference)
+- [JQ6500 to JQ8400 Breaking Changes](#jq6500-to-jq8400-breaking-changes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -156,7 +155,7 @@ Further Documentation and Library Reference
 -----------------------------
 
   * [Complete Documentation about the JQ8400 Mp3 Player Module For Arduino](http://sparks.gogo.co.nz/jq8400/index.html)
-  * [JQ8400_Serial Library Methods Reference](https://rawcdn.githack.com/sleemanj/JQ8400_Serial/9c5b402/docs/html/class_j_q8400___serial.html) (with thanks to githack.com)
+  * [JQ8400_Serial Library Methods Reference](https://rawcdn.githack.com/sleemanj/JQ8400_Serial/3ea709f/docs/html/class_j_q8400___serial.html) (with thanks to githack.com)
 
 JQ6500 to JQ8400 Breaking Changes
 --------------------------
