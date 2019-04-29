@@ -419,16 +419,16 @@ void  JQ8400_Serial::reset()
 #endif
       
       // If there is any random garbage on the line, clear that out now.
-      while(this->waitUntilAvailable(10)) this->read();
+      while(this->waitUntilAvailable(10)) this->_Serial->read();
 
-      this->write(MP3_CMD_BEGIN);
-      this->write(command);
-      this->write(requestLength);
+      this->_Serial->write(MP3_CMD_BEGIN);
+      this->_Serial->write(command);
+      this->_Serial->write(requestLength);
       for(uint8_t x = 0; x < requestLength; x++)
       {
-          this->write(requestBuffer[x]);
+          this->_Serial->write(requestBuffer[x]);
       }
-      this->write(MP3_CHECKSUM);
+      this->_Serial->write(MP3_CHECKSUM);
             
       if(responseBuffer && bufferLength) 
       {
@@ -459,7 +459,7 @@ void  JQ8400_Serial::reset()
       uint8_t      dataCount = 0;
       while(this->waitUntilAvailable(150))
       {
-        j = this->read();
+        j = this->_Serial->read();
                 
 #if MP3_DEBUG
         HEX_PRINT(j); Serial.print(" ");
@@ -530,35 +530,15 @@ void  JQ8400_Serial::reset()
       
     }
     
-    
-// as readBytes with terminator character
-// terminates if length characters have been read, timeout, or if the terminator character  detected
-// returns the number of characters placed in the buffer (0 means no valid data found)
-
-size_t JQ8400_Serial::readBytesUntilAndIncluding(char terminator, char *buffer, size_t length, byte maxOneLineOnly)
-{
-    if (length < 1) return 0;
-  size_t index = 0;
-  while (index < length) {
-    int c = timedRead();
-    if (c < 0) break;    
-    *buffer++ = (char)c;
-    index++;
-    if(c == terminator) break;
-    if(maxOneLineOnly && ( c == '\n') ) break;
-  }
-  return index; // return number of characters, not including null terminator
-}
-
 
 // Waits until data becomes available, or a timeout occurs
-int JQ8400_Serial::waitUntilAvailable(unsigned long maxWaitTime)
+int JQ8400_Serial::waitUntilAvailable(uint16_t maxWaitTime)
 {
-  unsigned long startTime;
+  uint32_t startTime;
   int c = 0;
   startTime = millis();
   do {
-    c = this->available();
+    c = this->_Serial->available();
     if (c) break;
   } while(millis() - startTime < maxWaitTime);
   

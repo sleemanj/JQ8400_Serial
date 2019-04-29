@@ -29,8 +29,6 @@
 #ifndef JQ8400Serial_h
 #define JQ8400Serial_h
 
-#include <SoftwareSerial.h>
-
 #define MP3_EQ_NORMAL     0
 #define MP3_EQ_POP        1
 #define MP3_EQ_ROCK       2
@@ -72,39 +70,79 @@
 
 #define HEX_PRINT(a) if(a < 16) Serial.print(0); Serial.print(a, HEX);
 
-class JQ8400_Serial : public SoftwareSerial
+class JQ8400_Serial
 {
-  
+  protected: 
+     Stream *_Serial;
+    
   public: 
 
-    /** Create JQ8400 object.
+    /** Create JQ8400 object with a given serial object to communicate to the 
+     *   JQ8400.
      * 
-     * Example, create global instance:
+     * Example for software serial...
+     * --------------------------------------------------------------------------------
      * 
-     *     JQ8400_Serial mp3(8,9);
+     *  #include <SoftwareSerial.h>
+     *  SoftwareSerial  mySerial(8,9);
      * 
-     * For a 5v Arduino:
-     * -----------------
-     *  * TX on JQ8400 connects to D8 on the Arduino
-     *  * RX on JQ8400 connects to one end of a 1k resistor,
-     *      other end of resistor connects to D9 on the Arduino
+     *  #include <JQ8400_Serial.h>
+     *  JQ8400_Serial   mp3(mySerial);
+     *  
+     *  void setup()
+     *  {
+     *    mySerial.begin(9600);
+     *    mp3.reset();
+     *  }
      * 
-     * For a 3v3 Arduino:
-     * -----------------
-     *  * TX on JQ8400 connects to D8 on the Arduino
-     *  * RX on JQ8400 connects to D9 on the Arduino
+     * Example over microcontroller's default hardware serial port...
+     * --------------------------------------------------------------------------------
      * 
-     * Of course, power and ground are also required, VCC on JQ8400 is 5v tolerant (but RX isn't totally, hence the resistor above).
+     *  #include <JQ8400_Serial.h>
+     *  JQ8400_Serial   mp3;
+     *  
+     *  void setup()
+     *  {
+     *    Serial.begin(9600);
+     *    mp3.begin(Serial);
+     *  }
      * 
-     * And then you can use in your setup():
+     * Example over microcontroller's other hardware serial port...
+     * --------------------------------------------------------------------------------
      * 
-     *     mp3.begin(9600)
-     *     mp3.reset();
+     *  #include <JQ8400_Serial.h>
+     *  JQ8400_Serial   mp3;
+     *  
+     *  void setup()
+     *  {
+     *    Serial2.begin(9600);
+     *    mp3.begin(Serial2);
+     *  }
      *
-     * and all the other commands :-)
+     * Example wiring for a 5v Arduino with SoftwareSerial on Pins 8 (RX) and 9 (TX):
+     * -----------------
+     *  * TX on JQ8400 connects to D8 (SoftwareSerial RX) on the Arduino
+     *  * RX on JQ8400 connects to one end of a 1k resistor,
+     *      other end of resistor connects to D9 (SoftwareSerial TX) on the Arduino
+     *      
+     * Example wiring for a 3v3 Arduino with SoftwareSerial on Pins 8 (RX) and 9 (TX):
+     * -----------------
+     *  * TX on JQ8400 connects to D8 (SoftwareSerial RX) on the Arduino
+     *  * RX on JQ8400 connects to D9 (SoftwareSerial TX) on the Arduino
+     * 
+     * Example wiring for an ESP32 Arduino using Serial2 connections...
+     * -----------------
+     *  * TX on JQ8400 connects to GPIO16 (Serial2 RX) on the ESP32
+     *  * RX on JQ8400 connects to GPIO17 (Serial2 TX) on the ESP32
+     *      * 
+     * Of course, power and ground are also required, VCC on JQ8400 is 5v tolerant (but RX isn't totally, hence the resistor above).  *
+     * 
+     * The TX voltage from the JQ8400 is 3.3v, you do not need to level-shift this 
+     * as 3.3v will still read as high for a 5v Arduino (and is safe for a 3.3v one).
+     * 
      */
     
-    JQ8400_Serial(short rxPin, short txPin) : SoftwareSerial(rxPin,txPin) { };
+    JQ8400_Serial(Stream &_Stream) { _Serial = &_Stream; };
     
     /** Start playing the current file, if paused the playing is resumed.
      * 
@@ -494,6 +532,7 @@ class JQ8400_Serial : public SoftwareSerial
      *  total length of the file in seconds.
      * 
      * @return Length of audio file in seconds.
+     * 
      */
     
     unsigned int   currentFileLengthInSeconds();
@@ -505,7 +544,16 @@ class JQ8400_Serial : public SoftwareSerial
      * 
      * The current file is the one that is playing, paused, or if stopped then
      * could be next to play or last played, uncertain.
+     * 
+     * Example:
+     * 
+     *     char buf[12];
+     *     mp3.currentFileName(buf, sizeof(buf));
+     *     Serial.println(buf);
      *
+     * @param buffer character buffer of 12 bytes or more (eg `char buf[12]`)
+     * @param bufferLength length of the buffer (eg 12)
+     * 
      */
     
     void           currentFileName(char *buffer, unsigned int bufferLength);    
@@ -583,6 +631,7 @@ class JQ8400_Serial : public SoftwareSerial
     /** Send a command with a 16 bit integer argument.
      *      * 
      * @param command       Byte value of to send as from the datasheet.
+     * @param arg           16 bit unsigned integer data
      */
     
     inline void sendCommand(uint8_t command, uint16_t arg, uint8_t *responseBuffer = 0, uint8_t bufferLength = 0) 
@@ -623,28 +672,13 @@ class JQ8400_Serial : public SoftwareSerial
     
     uint8_t getAvailableSources();
     
-    
-    /** Read bytes until and including a terminator character.
-     * 
-     * Note that no null termination is added, do it yourself.
-     * 
-     * @param terminator Character to indicate end of input.
-     * @param buffer     Buffer to place received characters.
-     * @param length     Length of buffer.
-     * @param maxOneLineOnly boolean to indicate if can span lines.
-     *
-     * @return Number of bytes read.
-     */
-    
-    size_t readBytesUntilAndIncluding(char terminator, char *buffer, size_t length, byte maxOneLineOnly = 0);
-    
     /** Blocking wait with a timeout for serial input.
      * 
      * @param maxWaitTime Milliseconds
      * @return bool Available (True) / Timed Out (False)
      */
     
-    int    waitUntilAvailable(unsigned long maxWaitTime = 1000);
+    int    waitUntilAvailable(uint16_t maxWaitTime = 1000);
     
     
     /** 
