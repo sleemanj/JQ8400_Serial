@@ -28,8 +28,6 @@
 
 #include <Arduino.h>
 #include "JQ8400_Serial.h"
-#include <SoftwareSerial.h>
-
 
 void  JQ8400_Serial::play()
 {
@@ -68,13 +66,13 @@ void  JQ8400_Serial::playFileByIndexNumber(uint16_t fileNumber)
   this->sendCommand(MP3_CMD_PLAY_IDX, fileNumber);
 }
 
-void  JQ8400_Serial::interjectFileByIndexNumber(unsigned int fileNumber)
+void  JQ8400_Serial::interjectFileByIndexNumber(uint16_t fileNumber)
 {  
   uint8_t buf[3] = { getSource(), (uint8_t)((fileNumber>>8)&0xFF), (uint8_t)(fileNumber & (byte)0xFF) };
   this->sendCommandData(MP3_CMD_INSERT_IDX, buf, 3, 0, 0);
 }
 
-void  JQ8400_Serial::seekFileByIndexNumber(unsigned int fileNumber)
+void  JQ8400_Serial::seekFileByIndexNumber(uint16_t fileNumber)
 {  
   // this->sendCommand(MP3_CMD_SEEK_IDX, (fileNumber>>8) & 0xFF, fileNumber & (byte)0xFF);
   this->sendCommand(MP3_CMD_SEEK_IDX, fileNumber);
@@ -113,7 +111,7 @@ void  JQ8400_Serial::prevFolder()
   this->sendCommand(MP3_CMD_PREV_FOLDER);
 }
 
-void  JQ8400_Serial::playFileNumberInFolderNumber(unsigned int folderNumber, unsigned int fileNumber)
+void  JQ8400_Serial::playFileNumberInFolderNumber(uint16_t folderNumber, uint16_t fileNumber)
 {
   // This is kinda weird, the wildcard is *REQUIRED*, without it, it WILL NOT find the file you want.
   //
@@ -157,7 +155,7 @@ void  JQ8400_Serial::playFileNumberInFolderNumber(unsigned int folderNumber, uns
   this->sendCommandData(MP3_CMD_PLAY_FILE_FOLDER, (uint8_t*)buf, sizeof(buf)-1, 0, 0);
 }
 
-void  JQ8400_Serial::playInFolderNumber(unsigned int folderNumber)
+void  JQ8400_Serial::playInFolderNumber(uint16_t folderNumber)
 {
   char buf[] = " /42*/*???";
   
@@ -335,17 +333,17 @@ void  JQ8400_Serial::reset()
     byte  JQ8400_Serial::getLoopMode()  { return currentLoop;   }
     
     
-    unsigned int  JQ8400_Serial::countFiles()   
+    uint16_t  JQ8400_Serial::countFiles()   
     {
       return this->sendCommandWithUnsignedIntResponse(MP3_CMD_COUNT_FILES); 
     }
     
-    unsigned int  JQ8400_Serial::currentFileIndexNumber()
+    uint16_t  JQ8400_Serial::currentFileIndexNumber()
     {
       return this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_IDX); 
     }
     
-    unsigned int  JQ8400_Serial::currentFilePositionInSeconds() 
+    uint16_t  JQ8400_Serial::currentFilePositionInSeconds() 
     {
       uint8_t buf[3];
       
@@ -358,7 +356,7 @@ void  JQ8400_Serial::reset()
       return (buf[0]*60*60) + (buf[1]*60) + buf[2];
     }
     
-    unsigned int  JQ8400_Serial::currentFileLengthInSeconds()   
+    uint16_t  JQ8400_Serial::currentFileLengthInSeconds()   
     {
       uint8_t buf[3];
       
@@ -369,7 +367,7 @@ void  JQ8400_Serial::reset()
       return 0; /* FIXME this->sendCommandWithUnsignedIntResponse(MP3_CMD_CURRENT_FILE_LEN_SEC); */ 
     }
     
-    void          JQ8400_Serial::currentFileName(char *buffer, unsigned int bufferLength) 
+    void          JQ8400_Serial::currentFileName(char *buffer, uint16_t bufferLength) 
     {
       // this->sendCommand(MP3_CMD_CURRENT_FILE_NAME, 0, 0, buffer, bufferLength);
       this->sendCommand(MP3_CMD_CURRENT_FILE_NAME, (uint8_t *)buffer, bufferLength);

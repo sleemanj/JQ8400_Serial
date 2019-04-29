@@ -214,7 +214,7 @@ class JQ8400_Serial
      *  @param fileNumber FAT Table index of the file to play next.
      */
     
-    void playFileByIndexNumber(unsigned int fileNumber);        
+    void playFileByIndexNumber(uint16_t fileNumber);        
     
     /** Interject the currently playing file (if any) with the given index number file.
      * 
@@ -233,7 +233,7 @@ class JQ8400_Serial
      *  @param fileNumber FAT Table index of the file to play next.
      */
     
-    void interjectFileByIndexNumber(unsigned int fileNumber);        
+    void interjectFileByIndexNumber(uint16_t fileNumber);        
     
     
     /** Play a specific file in a specific folder based on the name of those folder and file.
@@ -249,7 +249,7 @@ class JQ8400_Serial
      * @param fileNumber  0 to 999
      */
     
-    void playFileNumberInFolderNumber(unsigned int folderNumber, unsigned int fileNumber);
+    void playFileNumberInFolderNumber(uint16_t folderNumber, uint16_t fileNumber);
     
     /** Play the first (?) file in a specific folder 00 to 99.
      *
@@ -263,7 +263,7 @@ class JQ8400_Serial
      * 
      */
     
-    void playInFolderNumber(unsigned int folderNumber);
+    void playInFolderNumber(uint16_t folderNumber);
     
     
     /** Seek to a specific file based on it's (FAT table) index number.  
@@ -288,7 +288,7 @@ class JQ8400_Serial
      *  @param fileNumber FAT Table index of the file to play next.
      */
     
-    void seekFileByIndexNumber(unsigned int fileNumber);
+    void seekFileByIndexNumber(uint16_t fileNumber);
     
     /** A-B Loop for the file currently playing.
      * 
@@ -507,7 +507,7 @@ class JQ8400_Serial
      * 
      */
     
-    unsigned int   countFiles();    
+    uint16_t   countFiles();    
     
     /** For the currently playing (or paused, or file that would be played 
      *  next if stopped) file, return the file's (FAT table) index number.
@@ -517,7 +517,7 @@ class JQ8400_Serial
      *  @return Number of file.
      */
     
-    unsigned int   currentFileIndexNumber();
+    uint16_t   currentFileIndexNumber();
     
     /** For the currently playing or paused file, return the 
      *  current position in seconds.
@@ -526,7 +526,7 @@ class JQ8400_Serial
      * 
      */
     
-    unsigned int   currentFilePositionInSeconds();
+    uint16_t   currentFilePositionInSeconds();
     
     /** For the currently playing or paused file, return the 
      *  total length of the file in seconds.
@@ -535,7 +535,7 @@ class JQ8400_Serial
      * 
      */
     
-    unsigned int   currentFileLengthInSeconds();
+    uint16_t   currentFileLengthInSeconds();
     
     /** Get the name of the "current" file.
      *
@@ -556,7 +556,7 @@ class JQ8400_Serial
      * 
      */
     
-    void           currentFileName(char *buffer, unsigned int bufferLength);    
+    void           currentFileName(char *buffer, uint16_t bufferLength);    
         
     /** Play a sequence of files, which must all exist in a folder called "ZH" and be named 00.mp3 through 99.mp3
      * 
@@ -631,7 +631,7 @@ class JQ8400_Serial
     /** Send a command with a 16 bit integer argument.
      *      * 
      * @param command       Byte value of to send as from the datasheet.
-     * @param arg           16 bit unsigned integer data
+     * @param arg           16 bit uint16_teger data
      */
     
     inline void sendCommand(uint8_t command, uint16_t arg, uint8_t *responseBuffer = 0, uint8_t bufferLength = 0) 
@@ -650,7 +650,7 @@ class JQ8400_Serial
      * @return Response from module.
      */
     
-    unsigned int sendCommandWithUnsignedIntResponse(byte command);
+    uint16_t sendCommandWithUnsignedIntResponse(byte command);
 
     /** Send a command to the JQ8400 module, and get an 8 bit integer response.
      * 
