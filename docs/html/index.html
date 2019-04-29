@@ -101,31 +101,55 @@ $(document).ready(function(){initNavTree('index.html','');});
 <div class="title">JQ6500 MP3 Player Arduino Library Documentation</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Simple to use Arduino library to interface to JQ6500 (JQ6500-28P, JQ6500-16P) Mp3 Player Modules</p>
-<p>For complete documentation about the JQ6500 Mp3 Player Module, see: <a href="http://sparks.gogo.co.nz/jq6500/index.html">http://sparks.gogo.co.nz/jq6500/index.html</a></p>
-<p>For a library methods reference see: <a href="class_j_q6500___serial.html</a></p>
-<p><a href="http://sparks.gogo.co.nz/jq6500/doxygen/class_j_q6500___serial.html">http://sparks.gogo.co.nz/jq6500/doxygen/class_j_q6500___serial.html</a></p>
-<p>For Linux Upload and Windows Upload Repair Tool (JQ6500-16) see: <a href="https://github.com/NikolaiRadke/JQ6500-rescue-tool">https://github.com/NikolaiRadke/JQ6500-rescue-tool</a></p>
+<div class="textblock"><p><em>warning</em> This is a work in progress still, examples need to be rewritten, docs regenerated, and this readme isn't correct yet either :-)</p>
+<h1><a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> </h1>
+<p>Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-SD) Mp3 Player Modules</p>
+<p>For complete documentation about the JQ8400 Mp3 Player Module, see: <a href="http://sparks.gogo.co.nz/jq8400/index.html">http://sparks.gogo.co.nz/jq8400/index.html</a></p>
+<p>For a library methods reference see: <a href="class_j_q8400___serial.html</a></p>
+<p><b>Table of Contents</b></p>
+<ul>
+<li><a href="#jq8400_serial">JQ8400_Serial</a><ul>
+<li><a href="#download-install-and-example">Download, Install and Example</a></li>
+<li><a href="#connecting-to-your-arduino">Connecting To Your Arduino</a><ul>
+<li><a href="#for-a-softwareserial-connection">For a SoftwareSerial Connection</a><ul>
+<li><a href="#softwareserial-5v-arduino-connect-as-follows">SoftwareSerial **5v** Arduino, connect as follows.</a></li>
+<li><a href="#softwareserial-3v3-arduino-connect-as-follows">SoftwareSerial **3v3** Arduino, connect as follows...</a></li>
+</ul>
+</li>
+<li><a href="#for-a-built-in-additional-hardware-serial-connection-eg-esp32">For a built in additional hardware serial connection (eg ESP32)</a><ul>
+<li><a href="#built-in-additional-serial-on-5v-arduino-connect-as-follows">Built In Additional Serial on **5v** Arduino, connect as follows.</a></li>
+<li><a href="#built-in-additional-serial-on-3v3-arduino-connect-as-follows">Built In Additional Serial on **3v3** Arduino, connect as follows.</a></li>
+<li><a href="#example-for-esp32-using-built-in-serial2">Example for ESP32 using Built In Serial2</a></li>
+<li><a href="#example-code-for-serial2">Example Code For "Serial2"</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#power-demands">Power Demands</a></li>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#jq6500-to-jq8400-breaking-changes">JQ6500 to JQ8400 Breaking Changes</a></li>
+</ul>
+</li>
+</ul>
 <h2>Download, Install and Example </h2>
 <ul>
-<li>Download: <a href="http://sparks.gogo.co.nz/JQ6500_Serial.zip">http://sparks.gogo.co.nz/JQ6500_Serial.zip</a></li>
-<li>Open the Arduino IDE (1.0.5)</li>
+<li>Download: <a href="http://sparks.gogo.co.nz/JQ8400_Serial.zip">http://sparks.gogo.co.nz/JQ8400_Serial.zip</a></li>
+<li>Open the Arduino IDE (1.6+)</li>
 <li>Select the menu item Sketch &gt; Import Library &gt; Add Library</li>
-<li>Choose to install the JQ6500_Serial.zip file you downloaded</li>
-<li>Now you can choose File &gt; Examples &gt; <a class="el" href="class_j_q6500___serial.html">JQ6500_Serial</a> &gt; HelloWorld</li>
+<li>Choose to install the JQ8400_Serial.zip file you downloaded</li>
+<li>Now you can choose File &gt; Examples &gt; <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> &gt; HelloWorld</li>
 </ul>
 <h2>Connecting To Your Arduino </h2>
-<div class="image">
-<img src="http://sparks.gogo.co.nz/assets/_site_/images/jq6500/kq6500-16p.jpeg"  align="right" title="JQ6500-16p" alt="Pinout image of JQ6500-16p MP3 Player Module For Arduino"/>
-</div>
- <div class="image">
-<img src="http://sparks.gogo.co.nz/assets/_site_/images/jq6500/jq6500-28.jpeg"  align="right" title="JQ6500-28p" alt="Pinout image of JQ6500-28p MP3 Player Module For Arduino"/>
-</div>
-<p>There are two varients of the JQ6500 module as shown.</p>
-<p>To use this library with a <em>5v Arduino</em>, connect as follows.</p>
+<p>The <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> library can be configured to talk through any "Serial" port, including "SoftwareSerial", anything that is a Stream.</p>
+<p>Most commonly you will use a SoftwareSerial with typical "AVR" based Arduinos that only have one hardware seral port. For Arduino's (and related, like ESP32) that have more than one hardware serial port you will typically want to use one of those instead of SoftwareSerial.</p>
+<p>The most important consideration is that if your Arduino is 5 volt, you will want to put a 1k resistor on the RX pin of the JQ8400 and the Arduino's appropriate TX pin you are using.</p>
+<p>Below are some examples to help you.</p>
+<h3>For a SoftwareSerial Connection</h3>
+<p>This is the typical setup where you have an Arduino Uno or Nano etc which only has one "Hardware" serial port and you use that to upload and communicate to the Arduino yourself, therefore we use a SoftwareSerial connection to communicate between the Arduino and the JQ8400 Module.</p>
+<h4>SoftwareSerial <b>5v</b> Arduino, connect as follows.</h4>
 <table class="doxtable">
 <tr>
-<th>JQ6500 Module </th><th>Arduino  </th></tr>
+<th>JQ8400 Module </th><th>Arduino  </th></tr>
 <tr>
 <td>RX </td><td>through a 1K Resistor then to pin 9 </td></tr>
 <tr>
@@ -135,10 +159,10 @@ $(document).ready(function(){initNavTree('index.html','');});
 <tr>
 <td>VCC (any of) </td><td>VCC </td></tr>
 </table>
-<p>To use this library with a <em>3v3 Arduino</em>, connect as follows...</p>
+<h4>SoftwareSerial <b>3v3</b> Arduino, connect as follows...</h4>
 <table class="doxtable">
 <tr>
-<th>JQ6500 Module </th><th>Arduino  </th></tr>
+<th>JQ8400 Module </th><th>Arduino  </th></tr>
 <tr>
 <td>RX </td><td>pin 9 </td></tr>
 <tr>
@@ -148,18 +172,113 @@ $(document).ready(function(){initNavTree('index.html','');});
 <tr>
 <td>VCC (any of) </td><td>VCC </td></tr>
 </table>
-<p>You can use pins other than 9 and 8 if you wish, simply set them in your code.</p>
-<h2>Power Demands </h2>
+<p>You can use pins other than 9 and 8 if you wish, simply set them in your code, which looks something like this... </p><pre class="fragment">#include &lt;SoftwareSerial.h&gt;
+SoftwareSerial mySerial(8,9);
+
+#include &lt;JQ8400_Serial.h&gt;
+JQ8400_Serial mp3(mySerial);
+
+void setup()
+{
+  mySerial.begin(9600); // We must talk to the JQ8400 at 9600
+  mp3.reset();          // Reset the device (optional, recommended)
+}
+
+void loop()
+{
+  // You should do more interesting stuff than just this...
+  mp3.next();
+  while(mp3.busy()); // Wait until finished.
+}
+</pre><h3>For a built in additional hardware serial connection (eg ESP32)</h3>
+<p>This is a typical setup where your Arduino environment has more than one "Serial", and you want to use one of those to communicate to the JQ8400, leaving the normal "Serial" free for uploading, communication to the Arduino etc...</p>
+<h4>Built In Additional Serial on <b>5v</b> Arduino, connect as follows.</h4>
+<table class="doxtable">
+<tr>
+<th>JQ8400 Module </th><th>Arduino  </th></tr>
+<tr>
+<td>RX </td><td>through a 1K Resistor then to appropriate TX pin </td></tr>
+<tr>
+<td>TX </td><td>RX pin </td></tr>
+<tr>
+<td>GND (any of) </td><td>GND </td></tr>
+<tr>
+<td>VCC (any of) </td><td>VCC </td></tr>
+</table>
+<h4>Built In Additional Serial on <b>3v3</b> Arduino, connect as follows.</h4>
+<table class="doxtable">
+<tr>
+<th>JQ8400 Module </th><th>Arduino  </th></tr>
+<tr>
+<td>RX </td><td>appropriate TX pin </td></tr>
+<tr>
+<td>TX </td><td>appropriate RX pin </td></tr>
+<tr>
+<td>GND (any of) </td><td>GND </td></tr>
+<tr>
+<td>VCC (any of) </td><td>VCC </td></tr>
+</table>
+<h4>Example for ESP32 using Built In Serial2</h4>
+<table class="doxtable">
+<tr>
+<th>JQ8400 Module </th><th>ESP32  </th></tr>
+<tr>
+<td>RX </td><td>GPIO17 </td></tr>
+<tr>
+<td>TX </td><td>GPIO16 </td></tr>
+<tr>
+<td>GND (any of) </td><td>GND </td></tr>
+<tr>
+<td>VCC (any of) </td><td>VCC </td></tr>
+</table>
+<h4>Example Code For "Serial2"</h4>
+<pre class="fragment">#include &lt;JQ8400_Serial.h&gt;
+JQ8400_Serial mp3(Serial2);
+
+void setup()
+{
+  Serial2.begin(9600);  // We must talk to the JQ8400 at 9600 - maybe you need to add some extra parameters to begin, consult your specific board's documents if you have trouble.
+  mp3.reset();          // Reset the device (optional, recommended)
+}
+
+void loop()
+{
+  // You should do more interesting stuff than just this...
+  mp3.next();
+  while(mp3.busy()); // Wait until finished.
+}
+</pre><h2>Power Demands </h2>
 <p>If using the on-board speaker driver, then naturally the power demands are significant, and your USB power may not be sufficient at more 1/3rd level of volume or so, the symptom is the audo breaking up and potentially resetting when volume increases.</p>
 <p>You should use either an external power source, an external amp, or a lower volume if you experience this problem.</p>
 <h2>Usage </h2>
-<p>Open the HelloWorld example. </p>
+<p>Open the HelloWorld example.</p>
+<h2>JQ6500 to JQ8400 Breaking Changes </h2>
+<p>This section is for users of previous JQ6500 devices and the JQ6500_Serial library who are transitioning to a JQ8400 with <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> library.</p>
+<p>As much as possible the <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> library should follow the same "api", with some additions, however there are some "breaking changes" you should be aware of...</p>
+<ul>
+<li>The initialisation has changed so that you can (must) point the JQ8400 library to a specific serial connection to the JQ8400 player, you can use SoftwareSerial, or any of your other serial ports (or any Stream). This enables you to use devices that do not support SoftwareSerial.</li>
+</ul>
+<p><b>Example for software serial on pins 8 and 9...</b></p>
+<p>#include &lt;SoftwareSerial.h&gt; SoftwareSerial mySerial(8,9);</p>
+<p>#include &lt;<a class="el" href="_j_q8400___serial_8h.html" title="Arduino Library for JQ8400 MP3 Module. ">JQ8400_Serial.h</a>&gt; <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> mp3(mySerial);</p>
+<p>void setup() { mySerial.begin(9600); mp3.reset(); }</p>
+<p><b>Example over microcontroller's default hardware serial port...</b></p>
+<p>#include &lt;<a class="el" href="_j_q8400___serial_8h.html" title="Arduino Library for JQ8400 MP3 Module. ">JQ8400_Serial.h</a>&gt; <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> mp3;</p>
+<p>void setup() { Serial.begin(9600); mp3.begin(Serial); }</p>
+<p><b>Example over microcontroller's other hardware serial port...</b></p>
+<p>#include &lt;<a class="el" href="_j_q8400___serial_8h.html" title="Arduino Library for JQ8400 MP3 Module. ">JQ8400_Serial.h</a>&gt; <a class="el" href="class_j_q8400___serial.html">JQ8400_Serial</a> mp3;</p>
+<p>void setup() { Serial2.begin(9600); mp3.begin(Serial2); }</p>
+<ul>
+<li>JQ8400 does not support <code>countFolders()</code> at all (AFAIK) therefore this method is not available..</li>
+<li>JQ8400 is not given a source for <code>countFiles</code> - that is use <code>mp3.countFiles()</code> not <code>mp3.countFiles(MP3_SRC_SDCARD)</code>, use <code>mp3.setSource(MP3_SRC_SDCARD)</code> to change the source before counting if you are not already on that source.</li>
+<li>JQ8400 does not support MP3_EQ_BASS </li>
+</ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Apr 27 2019 11:06:04 for JQ6500 MP3 Player Arduino Library by
+    <li class="footer">Generated on Mon Apr 29 2019 16:55:22 for JQ6500 MP3 Player Arduino Library by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>
