@@ -11,6 +11,28 @@ For complete documentation about the JQ8400 Mp3 Player Module, see:
 For a library methods reference see:
    https://rawcdn.githack.com/sleemanj/JQ8400_Serial/48d9a2ea1c10bec7a9bf69f397898daec2b4101c/docs/html/class_j_q8400___serial.html
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [JQ8400_Serial](#jq8400_serial)
+  - [Download, Install and Example](#download-install-and-example)
+  - [Connecting To Your Arduino](#connecting-to-your-arduino)
+    - [For a SoftwareSerial Connection](#for-a-softwareserial-connection)
+      - [SoftwareSerial **5v** Arduino, connect as follows.](#softwareserial-5v-arduino-connect-as-follows)
+      - [SoftwareSerial **3v3** Arduino, connect as follows...](#softwareserial-3v3-arduino-connect-as-follows)
+    - [For a built in additional hardware serial connection (eg ESP32)](#for-a-built-in-additional-hardware-serial-connection-eg-esp32)
+      - [Built In Additional Serial on **5v** Arduino, connect as follows.](#built-in-additional-serial-on-5v-arduino-connect-as-follows)
+      - [Built In Additional Serial on **3v3** Arduino, connect as follows.](#built-in-additional-serial-on-3v3-arduino-connect-as-follows)
+      - [Example for ESP32 using Built In Serial2](#example-for-esp32-using-built-in-serial2)
+      - [Example Code For "Serial2"](#example-code-for-serial2)
+  - [Power Demands](#power-demands)
+  - [Usage](#usage)
+  - [JQ6500 to JQ8400 Breaking Changes](#jq6500-to-jq8400-breaking-changes)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+   
 Download, Install and Example
 -----------------------------
 
@@ -31,11 +53,11 @@ The most important consideration is that if your Arduino is 5 volt, you will wan
 
 Below are some examples to help you.
 
-## For a SoftwareSerial Connection
+### For a SoftwareSerial Connection
 
 This is the typical setup where you have an Arduino Uno or Nano etc which only has one "Hardware" serial port and you use that to upload and communicate to the Arduino yourself, therefore we use a SoftwareSerial connection to communicate between the Arduino and the JQ8400 Module.
 
-### SoftwareSerial *5v Arduino*, connect as follows.
+#### SoftwareSerial **5v** Arduino, connect as follows.
 
 | JQ8400 Module | Arduino |
 | ------------- | ------- |
@@ -44,7 +66,7 @@ This is the typical setup where you have an Arduino Uno or Nano etc which only h
 | GND (any of)  | GND     |
 | VCC (any of)  | VCC     |
 
-### SoftwareSerial *3v3 Arduino*, connect as follows...
+#### SoftwareSerial **3v3** Arduino, connect as follows...
 
 | JQ8400 Module | Arduino |
 | ------------- | ------- |
@@ -74,11 +96,11 @@ You can use pins other than 9 and 8 if you wish, simply set them in your code, w
       while(mp3.busy()); // Wait until finished.
     }
     
-## For a built in additional hardware serial connection (eg ESP32)
+### For a built in additional hardware serial connection (eg ESP32)
 
 This is a typical setup where your Arduino environment has more than one "Serial", and you want to use one of those to communicate to the JQ8400, leaving the normal "Serial" free for uploading, communication to the Arduino etc...
 
-### Built In Additional Serial on *5v Arduino*, connect as follows.
+#### Built In Additional Serial on **5v** Arduino, connect as follows.
 
 | JQ8400 Module | Arduino |
 | ------------- | ------- |
@@ -87,7 +109,7 @@ This is a typical setup where your Arduino environment has more than one "Serial
 | GND (any of)  | GND     |
 | VCC (any of)  | VCC     |
 
-### Built In Additional Serial on *3v3 Arduino*, connect as follows.
+#### Built In Additional Serial on **3v3** Arduino, connect as follows.
 
 | JQ8400 Module | Arduino |
 | ------------- | ------- |
@@ -96,7 +118,7 @@ This is a typical setup where your Arduino environment has more than one "Serial
 | GND (any of)  | GND     |
 | VCC (any of)  | VCC     |
 
-### Example for ESP32 using Built In Serial2
+#### Example for ESP32 using Built In Serial2
 
 | JQ8400 Module | ESP32 |
 | ------------- | ------- |
@@ -106,7 +128,7 @@ This is a typical setup where your Arduino environment has more than one "Serial
 | VCC (any of)  | VCC     |
 
 
-### Example Code For "Serial2"
+#### Example Code For "Serial2"
 
     #include <JQ8400_Serial.h>
     JQ8400_Serial mp3(Serial2);
