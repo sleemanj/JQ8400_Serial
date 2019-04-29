@@ -2,25 +2,28 @@
  *
  *  Simply plays all tracks in a loop.
  *
+ * | JQ8400 Module | ESP32    |
+ * | ------------- | -------- |
+ * | RX            | GPIO17   |
+ * | TX            | GPIO16   |
+ * | GND (any of)  | GND      |
+ * | VCC (any of)  | VCC      |
+
  * @author James Sleeman,  http://sparks.gogo.co.nz/
  * @license MIT License
  * @file
  */
  
 
-// This example uses SoftwareSerial on pin 8 and 9
-#include <SoftwareSerial.h>
-SoftwareSerial mySoftwareSerial(8,9);
-
 // Create the mp3 connection itself, notice how we give it the 
 //  serial object we want it to use to talk to the JQ8400 module.
-// For example you might use mp3(Serial2) instead of a SoftwareSerial
+
 #include <JQ8400_Serial.h>
-JQ8400_Serial mp3(mySoftwareSerial);
+JQ8400_Serial mp3(Serial2);
 
 void setup() 
 {  
-  mySoftwareSerial.begin(9600);
+  Serial2.begin(9600);
   mp3.reset();
   mp3.setVolume(20);
   mp3.setLoopMode(MP3_LOOP_ALL);

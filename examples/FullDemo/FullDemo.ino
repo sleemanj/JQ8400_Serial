@@ -1,26 +1,41 @@
-/** Full demo of MP3 Controls, after uploading, open your Serial Monitor and enter commands.
+/** General demo of MP3 Controls, after uploading, open your Serial Monitor and enter commands.
  * 
- * Allows you to test all the various controls of the JQ6500 module.
+ * Allows you to test most the various controls of the JQ8400 module.
  *
  * @author James Sleeman,  http://sparks.gogo.co.nz/
  * @license MIT License
  * @file
  */
 
-#include <JQ6500_Serial.h>
-
-// Create the mp3 module object, 
-//   Arduino Pin 8 is connected to TX of the JQ6500
+// This example uses SoftwareSerial
+//
+//   Arduino Pin 8 is connected to TX of the JQ8400
 //   Arduino Pin 9 is connected to one end of a  1k resistor, 
-//     the other end of the 1k resistor is connected to RX of the JQ6500
+//     the other end of the 1k resistor is connected to RX of the JQ8400
 //   If your Arduino is 3v3 powered, you can omit the 1k series resistor
-JQ6500_Serial mp3(8,9);
+//
+// If you have an additional hardware serial, you don't need these two lines
 
-void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  mp3.begin(9600);
+#include <SoftwareSerial.h>
+SoftwareSerial mySerial(8,9);
+
+// Create the mp3 connection itself, notice how we give it the 
+//  serial object we want it to use to talk to the JQ8400 module.
+// For example you might use mp3(Serial2) instead.
+#include <JQ8400_Serial.h>
+JQ8400_Serial mp3(mySerial);
+
+void setup() 
+{  
+  // We must communicate at 9600 to the JQ8400, setup the serial port we are using
+  //  to do that now.  
+  mySerial.begin(9600);
+
+  // Now we cam reset.
   mp3.reset();
+
+  // We output our menu and status etc to the normal serial port
+  Serial.begin(9600);
   statusAndHelpOutput();
 }
 
@@ -91,12 +106,15 @@ void loop() {
           Serial.print("Loop ");
           switch(b)
           {
-            case 'A': Serial.println("All"); mp3.setLoopMode(MP3_LOOP_ALL);      break;  // Plays the tracks one after another and repeats 
-            case 'F': Serial.println("Folder"); mp3.setLoopMode(MP3_LOOP_FOLDER);       break; // Loop within folder
-            case 'O': Serial.println("One (repeat playing same file)"); mp3.setLoopMode(MP3_LOOP_ONE);       break; // | These seem to do the same, repeat the same track over and over
-            case 'R': Serial.println("??? - Don't know what it means exactly, in the datasheet it is \"RAM\""); mp3.setLoopMode(MP3_LOOP_RAM);       break; //- 
+            case 'A': Serial.println(F("All")); mp3.setLoopMode(MP3_LOOP_ALL);      break;  // Plays the tracks one after another and repeats 
+            case 'R': Serial.println(F("Random")); mp3.setLoopMode(MP3_LOOP_ALL_RANDOM);       break;
+            
+            case 'F': Serial.println(F("Folder")); mp3.setLoopMode(MP3_LOOP_FOLDER);       break; // Loop within folder
+            case 'r': Serial.println(F("Folder Random")); mp3.setLoopMode(MP3_LOOP_FOLDER_RANDOM);       break;
+            
+            case 'O': Serial.println(F("One (repeat playing same file)")); mp3.setLoopMode(MP3_LOOP_ONE);       break;
             case 'N': 
-            case 'S': Serial.println("None (play file and stop)"); mp3.setLoopMode(MP3_LOOP_ONE_STOP); break;  // Default, plays track and stops
+            case 'S': Serial.println(F("None (play file and stop)")); mp3.setLoopMode(MP3_LOOP_ONE_STOP); break;  // Default, plays track and stops
           }
         }
         return;
@@ -136,6 +154,23 @@ void loop() {
         }
         return;
         
+        case 'i':
+        {
+          char fnumBuff[10]; 
+          memset(fnumBuff, 0, sizeof(fnumBuff));          
+          Serial.readBytesUntil('\n',fnumBuff, sizeof(fnumBuff)-1);
+          unsigned int fnum = strtoul(fnumBuff, NULL, 10);
+
+          Serial.println();
+          Serial.print("Interject file #");
+          Serial.print(fnum);
+          Serial.println(F(" (if it exists)."));
+          mp3.interjectFileByIndexNumber(fnum); // 48 == ord('0')   
+          return;
+          
+        }
+        return;
+        
         case 'F':
         {
           char fnumBuff[10]; 
@@ -161,6 +196,23 @@ void loop() {
           mp3.playFileNumberInFolderNumber(folnum, fnum); // 48 == ord('0')   
         }
         return;
+
+         case 'D':
+         {
+            char fnumBuff[10]; 
+            memset(fnumBuff, 0, sizeof(fnumBuff));          
+            Serial.readBytesUntil('/',fnumBuff, sizeof(fnumBuff)-1);
+            
+            unsigned int folnum = strtoul(fnumBuff, NULL, 10);
+            folnum = max(1,min(folnum, 99));
+            
+            Serial.print("Play "); 
+              if(folnum < 10) Serial.print('0');
+            Serial.print(folnum);
+            Serial.println("/*.mp3 (if it exists).");
+            mp3.playInFolderNumber(folnum); // 48 == ord('0')   
+         }
+         return;
                   
         case '?': statusAndHelpOutput(); return;
         
@@ -190,7 +242,7 @@ void loop() {
 void statusAndHelpOutput()
 {
    Serial.println();
-   Serial.println(F("JQ6500 MP3 Player Demo"));
+   Serial.println(F("JQ8400 MP3 Player Demo"));
    Serial.println(F("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"));
    
    Serial.print(F("Status           : "));
@@ -218,35 +270,43 @@ void statusAndHelpOutput()
    switch(mp3.getLoopMode())
    {
      case MP3_LOOP_ALL:      Serial.println(F("Play all tracks, then repeat."));  break;
-     case MP3_LOOP_FOLDER:   Serial.println(F("Play all tracks in folder, then repeat."));     break;
-     case MP3_LOOP_ONE:      Serial.println(F("Play one track then repeat (loop track)."));    break;
-     case MP3_LOOP_RAM:      Serial.println(F("Unknown function exactly, seems to play one track then repeat?"));    break;
-     case MP3_LOOP_ONE_STOP: Serial.println(F("Play one track then stop."));    break;          
+     case MP3_LOOP_ALL_STOP:      Serial.println(F("Play all tracks, then stop."));  break;
+     case MP3_LOOP_ALL_RANDOM: Serial.println(F("Play all tracks randomly."));    break;          
+          
+     case MP3_LOOP_ONE:      Serial.println(F("Play one track then repeat (loop track)."));    break;     
+     case MP3_LOOP_ONE_STOP: Serial.println(F("Play one track then stop (no looping)."));    break;          
+     
+     case MP3_LOOP_FOLDER:   Serial.println(F("Play all tracks in folder, then repeat."));     break;     
+     case MP3_LOOP_FOLDER_STOP:   Serial.println(F("Play all tracks in folder, then stop."));     break;
+     case MP3_LOOP_FOLDER_RANDOM:   Serial.println(F("Play all tracks in folder randomly."));     break;     
+     
    }
    Serial.println();
-    
-   uint8_t currentSource = mp3.getSource();
-   
-   mp3.setSource(MP3_SRC_BUILTIN);
-   Serial.print(F("# of On Board Memory Files    : "));
-   Serial.println(mp3.countFiles());
-   
-   if(mp3.sourceAvailable(MP3_SRC_SDCARD))
+
+   if(!mp3.busy())
    {
-     mp3.setSource(MP3_SRC_SDCARD);
-     Serial.print(F("# of SD Card Files    : "));
-     Serial.println(mp3.countFiles(MP3_SRC_SDCARD));
-   }
-   else
-   {
-     Serial.println(F("SD Card Not Available"));
-   }
+     uint8_t currentSource = mp3.getSource();
    
-   if(currentSource != mp3.getSource())
-   {
-     mp3.setSource(currentSource);
+     mp3.setSource(MP3_SRC_BUILTIN);   
+     Serial.print(F("# of On Board Memory Files    : "));
+     Serial.println(mp3.countFiles());
+     
+     if(mp3.sourceAvailable(MP3_SRC_SDCARD))
+     {
+       mp3.setSource(MP3_SRC_SDCARD);
+       Serial.print(F("# of SD Card Files    : "));
+       Serial.println(mp3.countFiles());
+     }
+     else
+     {
+       Serial.println(F("SD Card Not Available"));
+     }
+     
+     if(currentSource != mp3.getSource())
+     {
+       mp3.setSource(currentSource);
+     }
    }
-   
    Serial.print(F("\"Current\" File Index: "));
    Serial.println(mp3.currentFileIndexNumber());
    Serial.println();
@@ -264,7 +324,7 @@ void statusAndHelpOutput()
    Serial.println(F("p Play\t\t> Next\t\t< Prev\n[space] Pause\tr Restart from start of file\n] Next folder\t[ Prev folder\n"));
    
    Serial.println(F("f[1-65534]      Play file by (FAT table) index number\nF[01-99]/[001-999].mp3 Play [001-999].mp3 in folder [01-99]\n"));
+   Serial.println(F("i[1-65534]      Interject file by (FAT table) index number\n"));
    
-   Serial.println(F("+ Vol up\t- Vol down\tm Mute\nv[0-30] Set volume\n\ne[N/P/R/J/C/B] Equalizer (N)ormal, (P)op, (R)ock, (J)azz, (C)lassic\nl[A/F/O/R/N]   Loop (A)ll, (F)older, (O)ne, (R)???, (N)o Loop\ns[S/B]         Switch to (S)D Card/(B)uilt In Memory\n\n"));
+   Serial.println(F("+ Vol up\t- Vol down\tm Mute\nv[0-30] Set volume\n\ne[N/P/R/J/C/B] Equalizer (N)ormal, (P)op, (R)ock, (J)azz, (C)lassic\nl[A/F/O/R/N]   Loop (A)ll, (R)andom, (F)older, (r)andom In Folder, (O)ne,(N)o Loop\ns[S/B]         Switch to (S)D Card/(B)uilt In Memory\n\n"));
 }
-
