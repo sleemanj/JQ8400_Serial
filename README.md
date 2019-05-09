@@ -155,7 +155,7 @@ Further Documentation and Library Reference
 -----------------------------
 
   * [Complete Documentation about the JQ8400 Mp3 Player Module For Arduino](http://sparks.gogo.co.nz/jq8400/index.html)
-  * [JQ8400_Serial Library Methods Reference](https://rawcdn.githack.com/sleemanj/JQ8400_Serial/3ea709f/docs/html/class_j_q8400___serial.html) (with thanks to githack.com)
+  * [JQ8400_Serial Library Methods Reference](https://rawcdn.githack.com/sleemanj/JQ8400_Serial/24c243e/docs/html/class_j_q8400___serial.html) (with thanks to githack.com)
 
 JQ6500 to JQ8400 Breaking Changes
 --------------------------
