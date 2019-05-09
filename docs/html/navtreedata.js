@@ -1,6 +1,6 @@
 var NAVTREE =
 [
-  [ "JQ6500 MP3 Player Arduino Library", "index.html", [
+  [ "JQ8400 MP3 Player Arduino Library", "index.html", [
     [ "Classes", null, [
       [ "Class List", "annotated.html", "annotated" ],
       [ "Class Index", "classes.html", null ],
