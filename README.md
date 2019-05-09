@@ -25,7 +25,7 @@ Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-TF) Mp3 
 
 | JQ8400-TF | JQ8400-FL |
 | --------- | --------- |
-| <img src="https://sparks.gogo.co.nz/assets/_site_/images/jq8400/P1090887.jpg" /> | <img src="http://sparks.gogo.co.nz/assets/_site_/images/jq8400/P1090886.jpg" />|
+| <img src="https://sparks.gogo.co.nz/assets/_site_/images/jq8400/P1090887.jpg" /> | <img src="https://sparks.gogo.co.nz/assets/_site_/images/jq8400/P1090886.jpg" />|
 
 Download, Install and Example
 -----------------------------
