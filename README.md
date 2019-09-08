@@ -183,23 +183,23 @@ As much as possible the JQ8400_Serial library should follow the same "api", with
   **Example over microcontroller's default hardware serial port...**
 
     #include <JQ8400_Serial.h>
-    JQ8400_Serial   mp3;
+    JQ8400_Serial   mp3(Serial);
     
     void setup()
     {
       Serial.begin(9600);
-      mp3.begin(Serial);
+      mp3.reset();
     }
 
   **Example over microcontroller's other hardware serial port...**
 
     #include <JQ8400_Serial.h>
-    JQ8400_Serial   mp3;
+    JQ8400_Serial   mp3(Serial2);
     
     void setup()
     {
       Serial2.begin(9600);
-      mp3.begin(Serial2);
+      mp3.reset();
     }
 
   * JQ8400 does not support `countFolders()` at all (AFAIK) therefore this method is not available..
