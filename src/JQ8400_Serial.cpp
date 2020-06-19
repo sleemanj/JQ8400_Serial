@@ -182,11 +182,15 @@ void JQ8400_Serial::playSequenceByFileNumber(uint8_t playList[], uint8_t listLen
   uint8_t i = 0;
   for(uint8_t x = 0; x < listLength; x++)
   {
-    if(playList[x]<10)
+    if(playList[x] < 10)
     {
       buf[i++] = '0';
     }
     itoa(playList[x], &buf[i++], 10);
+    if (playList[x] >= 10)
+    {
+      i++;
+    }
   }
   
   this->sendCommandData(MP3_CMD_PLAYLIST, (uint8_t *)buf, sizeof(buf)-1, 0, 0);
