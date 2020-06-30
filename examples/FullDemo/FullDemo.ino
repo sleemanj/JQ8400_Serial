@@ -190,7 +190,7 @@ void loop() {
           Serial.print(folnum);
           Serial.print('/');
             if(fnum < 10) Serial.print("00");
-            else if(fnum < 10) Serial.print('0');
+            else if(fnum < 100) Serial.print('0');
           Serial.print(fnum);
           Serial.println(".mp3 (if it exists).");
           mp3.playFileNumberInFolderNumber(folnum, fnum); // 48 == ord('0')   
