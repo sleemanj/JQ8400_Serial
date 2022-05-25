@@ -20,6 +20,7 @@ Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-TF) Mp3 
 - [Troubleshooting](#troubleshooting)
 - [Further Documentation and Library Reference](#further-documentation-and-library-reference)
 - [JQ6500 to JQ8400 Breaking Changes](#jq6500-to-jq8400-breaking-changes)
+- [Alternative One Wire Implementation For Low Sleep Current](#alternative-one-wire-implementation-for-low-sleep-current)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -205,3 +206,9 @@ As much as possible the JQ8400_Serial library should follow the same "api", with
   * JQ8400 does not support `countFolders()` at all (AFAIK) therefore this method is not available..
   * JQ8400 is not given a source for `countFiles` - that is use `mp3.countFiles()` not `mp3.countFiles(MP3_SRC_SDCARD)`, use `mp3.setSource(MP3_SRC_SDCARD)` to change the source before counting if you are not already on that source.
   * JQ8400 does not support MP3_EQ_BASS
+
+Alternative One Wire Implementation For Low Sleep Current
+--------------------------
+   
+Github user @arduino12 has produced a [Low Sleep Current JQ8400 Library](https://github.com/arduino12/mp3_player_module_wire) which uses the alternative One Wire prototcol of the JQ8400 which with some modificiations allows the JQ8400 to have sleep current of just 140uA.  
+
