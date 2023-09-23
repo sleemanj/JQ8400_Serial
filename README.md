@@ -31,7 +31,7 @@ Simple to use Arduino library to interface to JQ8400 (JQ8400-FL, JQ8400-TF) Mp3 
 Download, Install and Example
 -----------------------------
 
-* Download: http://sparks.gogo.co.nz/JQ8400_Serial.zip
+* Download: https://sparks.gogo.co.nz/JQ8400_Serial.zip
 * Open the Arduino IDE (1.6+)
 * Select the menu item Sketch > Import Library > Add Library
 * Choose to install the JQ8400_Serial.zip file you downloaded
